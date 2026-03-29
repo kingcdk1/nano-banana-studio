@@ -200,6 +200,21 @@
       box-shadow: 0 0 12px var(--gold-glow);
     }
 
+    /* ── MODEL SELECT ── */
+    .model-select-wrap { position: relative; }
+    .model-select {
+      width: 100%; padding: 10px 14px; border-radius: var(--radius);
+      border: 1px solid var(--border); background: var(--surface-2);
+      color: var(--text); font-family: 'Outfit', sans-serif;
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      outline: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236a6a82' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+      transition: border-color 0.2s;
+    }
+    .model-select:focus { border-color: var(--gold); }
+    .model-select option { background: var(--surface); color: var(--text); }
+
     /* ── GENERATE BTN ── */
     .gen-btn {
       width: 100%; padding: 14px; border: none; border-radius: var(--radius);
@@ -457,6 +472,18 @@
           <div class="presets-grid" id="presets-grid"></div>
         </div>
 
+        <!-- MODEL SELECTOR -->
+        <div>
+          <div class="section-label">Model</div>
+          <div class="model-select-wrap">
+            <select id="model-select" class="model-select">
+              <option value="gemini-2.5-flash-image">🍌 Nano Banana (Fast / Free)</option>
+              <option value="gemini-3.1-flash-image-preview" selected>🍌 Nano Banana 2 (Best)</option>
+              <option value="gemini-3-pro-image-preview">🍌 Nano Banana Pro (Studio)</option>
+            </select>
+          </div>
+        </div>
+
         <!-- GENERATE -->
         <button class="gen-btn" id="generate-btn" onclick="handleGenerate()">
           ✦ Generate Image
@@ -681,8 +708,10 @@
         }
         parts.push({ text: prompt });
 
+        const selectedModel = document.getElementById("model-select").value;
+
         const resp = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
