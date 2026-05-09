@@ -11,6 +11,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍌</text></svg>" />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -30,6 +31,7 @@
       --text-dim: #6a6a82;
       --red: #ff4455;
       --green: #22c55e;
+      --blue: #3b82f6;
       --radius: 10px;
       --radius-lg: 16px;
     }
@@ -49,10 +51,9 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-    /* ── LAYOUT ── */
     .app { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
 
-    /* ── HEADER ── */
+    /* HEADER */
     .header {
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 24px;
@@ -77,55 +78,68 @@
     .logo-v { font-size: 11px; font-weight: 500; color: var(--text-dim); margin-left: 6px; letter-spacing: 1px; }
     .header-actions { display: flex; align-items: center; gap: 8px; }
 
-    /* ── API KEY BAR ── */
-    .api-bar {
-      display: none; padding: 12px 24px;
+    /* API KEY PANEL */
+    .api-panel {
+      display: none; padding: 16px 24px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      align-items: center; gap: 10px;
+      flex-direction: column; gap: 10px;
       animation: slideDown 0.25s ease;
     }
-    .api-bar.show { display: flex; }
-    .api-bar input {
+    .api-panel.show { display: flex; }
+    .api-row { display: flex; gap: 8px; align-items: center; }
+    .api-row label {
+      min-width: 80px; font-size: 12px; font-weight: 600;
+      color: var(--text-mid); letter-spacing: 0.3px;
+    }
+    .api-row input {
       flex: 1; padding: 9px 14px; border-radius: var(--radius);
       border: 1px solid var(--border); background: var(--surface-2);
       color: var(--text); font-family: 'JetBrains Mono', monospace;
-      font-size: 13px; outline: none; transition: border-color 0.2s;
+      font-size: 12px; outline: none; transition: border-color 0.2s;
     }
-    .api-bar input:focus { border-color: var(--gold); }
-    .api-bar input::placeholder { color: var(--text-dim); }
+    .api-row input:focus { border-color: var(--gold); }
+    .api-row input::placeholder { color: var(--text-dim); }
+    .api-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .api-hint {
+      font-size: 11px; color: var(--text-dim); line-height: 1.5;
+      padding: 8px 12px; background: var(--surface-2);
+      border-radius: 8px; border-left: 2px solid var(--gold-dim);
+    }
+    .api-hint a { color: var(--gold); text-decoration: none; }
 
     @keyframes slideDown {
       from { opacity: 0; transform: translateY(-8px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── MAIN AREA ── */
     .main {
       flex: 1; display: grid;
-      grid-template-columns: 360px 1fr;
+      grid-template-columns: 380px 1fr;
     }
 
-    /* ── LEFT PANEL ── */
+    /* LEFT PANEL */
     .panel-left {
       border-right: 1px solid var(--border);
-      padding: 24px;
-      display: flex; flex-direction: column; gap: 20px;
+      padding: 20px;
+      display: flex; flex-direction: column; gap: 18px;
       overflow-y: auto;
       background: var(--surface);
+      max-height: calc(100vh - 70px);
+      max-height: calc(100dvh - 70px);
     }
 
-    /* ── MODE TOGGLE ── */
-    .mode-toggle {
+    /* MODE TABS */
+    .mode-tabs {
       display: flex; border-radius: var(--radius); overflow: hidden;
       border: 1px solid var(--border);
       background: var(--bg);
     }
     .mode-btn {
-      flex: 1; padding: 10px 0; border: none; background: transparent;
+      flex: 1; padding: 10px 4px; border: none; background: transparent;
       color: var(--text-dim); font-family: 'Outfit', sans-serif;
-      font-size: 13px; font-weight: 600; cursor: pointer;
-      transition: all 0.25s; letter-spacing: 0.3px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all 0.25s; letter-spacing: 0.2px;
     }
     .mode-btn.active {
       background: linear-gradient(135deg, var(--gold), #e8a000);
@@ -133,63 +147,143 @@
     }
     .mode-btn:not(.active):hover { color: var(--text); background: var(--surface-2); }
 
-    /* ── UPLOAD ZONE ── */
+    /* PROVIDER PILLS */
+    .provider-row {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .provider-pill {
+      flex: 1 1 auto; min-width: 0; padding: 7px 12px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--surface-2);
+      color: var(--text-mid); font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; text-align: center;
+      font-family: 'Outfit', sans-serif; letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+    .provider-pill:hover { border-color: var(--border-light); color: var(--text); }
+    .provider-pill.active {
+      border-color: var(--gold); background: var(--gold-subtle);
+      color: var(--gold);
+    }
+
+    /* UPLOAD ZONE */
     .upload-zone {
       border: 2px dashed var(--border);
       border-radius: var(--radius-lg);
-      padding: 28px; text-align: center;
+      padding: 24px; text-align: center;
       cursor: pointer; transition: all 0.3s;
-      position: relative; overflow: hidden;
+      position: relative;
       background: var(--surface-2);
-      min-height: 140px;
+      min-height: 110px;
       display: flex; align-items: center; justify-content: center;
     }
     .upload-zone:hover, .upload-zone.drag-over {
       border-color: var(--gold); background: var(--gold-subtle);
     }
-    .upload-zone.has-image { border-style: solid; border-color: var(--border-light); padding: 0; }
-    .upload-icon { font-size: 32px; margin-bottom: 8px; }
-    .upload-label { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+    .upload-icon { font-size: 28px; margin-bottom: 6px; }
+    .upload-label { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
     .upload-label span { color: var(--gold); font-weight: 600; }
-    .upload-preview { display: none; width: 100%; }
-    .upload-preview img {
-      width: 100%; border-radius: 14px;
-      max-height: 200px; object-fit: contain;
-    }
-    .upload-remove {
-      position: absolute; top: 8px; right: 8px;
-      width: 28px; height: 28px; border-radius: 50%;
-      background: rgba(0,0,0,0.7); border: 1px solid var(--border);
-      color: var(--text); cursor: pointer; font-size: 14px;
-      display: flex; align-items: center; justify-content: center;
-      backdrop-filter: blur(8px); z-index: 5;
-    }
+    .upload-label-sm { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
 
-    /* ── PROMPT ── */
+    /* THUMBNAIL GRID */
+    .thumb-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+      margin-top: 10px;
+    }
+    .thumb-item {
+      position: relative; aspect-ratio: 1;
+      border-radius: 8px; overflow: hidden;
+      border: 1px solid var(--border-light);
+      background: var(--bg);
+    }
+    .thumb-item img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb-remove {
+      position: absolute; top: 4px; right: 4px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(0,0,0,0.85); border: 1px solid var(--border);
+      color: var(--text); cursor: pointer; font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(8px);
+    }
+    .thumb-add {
+      aspect-ratio: 1; border-radius: 8px;
+      border: 2px dashed var(--border);
+      background: var(--surface-2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: var(--text-dim);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .thumb-add:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* SECTIONS */
     .section-label {
       font-size: 11px; font-weight: 600; color: var(--text-dim);
       text-transform: uppercase; letter-spacing: 1.5px;
-      margin-bottom: 8px;
+      margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
     }
+    .section-label .badge {
+      padding: 2px 6px; border-radius: 4px;
+      background: var(--gold-subtle); color: var(--gold);
+      font-size: 9px; letter-spacing: 0.5px;
+    }
+
     .prompt-area {
-      width: 100%; min-height: 100px; max-height: 200px; resize: vertical;
-      padding: 14px; border-radius: var(--radius);
+      width: 100%; min-height: 90px; max-height: 200px; resize: vertical;
+      padding: 12px; border-radius: var(--radius);
       border: 1px solid var(--border); background: var(--surface-2);
       color: var(--text); font-family: 'Outfit', sans-serif;
-      font-size: 14px; line-height: 1.5; outline: none;
+      font-size: 13px; line-height: 1.5; outline: none;
       transition: border-color 0.2s;
     }
     .prompt-area:focus { border-color: var(--gold); }
     .prompt-area::placeholder { color: var(--text-dim); }
 
-    /* ── STYLE PRESETS ── */
+    /* OPTIONS GRID */
+    .opts-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+    .opt-block {
+      padding: 10px; border-radius: 8px;
+      background: var(--surface-2); border: 1px solid var(--border);
+    }
+    .opt-block .lbl {
+      font-size: 10px; color: var(--text-dim); font-weight: 600;
+      letter-spacing: 0.5px; margin-bottom: 6px;
+    }
+    .opt-block select {
+      width: 100%; padding: 6px 8px; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--bg);
+      color: var(--text); font-family: 'Outfit', sans-serif;
+      font-size: 12px; outline: none; cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236a6a82' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center;
+      padding-right: 24px;
+    }
+    .toggle-row {
+      display: flex; align-items: center; gap: 8px; margin-top: 6px;
+    }
+    .toggle-row input[type=checkbox] {
+      width: 32px; height: 18px; appearance: none;
+      background: var(--border); border-radius: 9px;
+      position: relative; cursor: pointer; transition: background 0.2s;
+    }
+    .toggle-row input[type=checkbox]:checked { background: var(--gold); }
+    .toggle-row input[type=checkbox]::before {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--text); transition: transform 0.2s;
+    }
+    .toggle-row input[type=checkbox]:checked::before { transform: translateX(14px); background: #000; }
+    .toggle-row label { font-size: 12px; color: var(--text-mid); cursor: pointer; }
+
+    /* PRESETS */
     .presets-grid {
       display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
     }
     .preset-chip {
-      padding: 8px 10px; border-radius: 8px;
+      padding: 8px 6px; border-radius: 8px;
       border: 1px solid var(--border); background: var(--surface-2);
-      color: var(--text-mid); font-size: 12px; font-weight: 500;
+      color: var(--text-mid); font-size: 11px; font-weight: 500;
       cursor: pointer; transition: all 0.2s; text-align: center;
       font-family: 'Outfit', sans-serif;
     }
@@ -200,13 +294,12 @@
       box-shadow: 0 0 12px var(--gold-glow);
     }
 
-    /* ── MODEL SELECT ── */
-    .model-select-wrap { position: relative; }
+    /* MODEL SELECT */
     .model-select {
       width: 100%; padding: 10px 14px; border-radius: var(--radius);
       border: 1px solid var(--border); background: var(--surface-2);
       color: var(--text); font-family: 'Outfit', sans-serif;
-      font-size: 13px; font-weight: 500; cursor: pointer;
+      font-size: 12px; font-weight: 500; cursor: pointer;
       outline: none; appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236a6a82' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
       background-repeat: no-repeat; background-position: right 12px center;
@@ -215,7 +308,7 @@
     .model-select:focus { border-color: var(--gold); }
     .model-select option { background: var(--surface); color: var(--text); }
 
-    /* ── GENERATE BTN ── */
+    /* GENERATE BTN */
     .gen-btn {
       width: 100%; padding: 14px; border: none; border-radius: var(--radius);
       background: linear-gradient(135deg, var(--gold), #e8a000);
@@ -232,7 +325,6 @@
     .gen-btn:active:not(:disabled) { transform: translateY(0); }
     .gen-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    /* ── BUTTONS GENERAL ── */
     .btn-sm {
       padding: 8px 14px; border-radius: 8px;
       border: 1px solid var(--border); background: var(--surface-2);
@@ -241,6 +333,10 @@
       transition: all 0.2s;
     }
     .btn-sm:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-sm.primary {
+      background: linear-gradient(135deg, var(--gold), #e8a000);
+      color: #000; border-color: transparent; font-weight: 600;
+    }
     .btn-icon {
       width: 36px; height: 36px; border-radius: 9px;
       border: 1px solid var(--border); background: var(--surface-2);
@@ -250,11 +346,11 @@
     }
     .btn-icon:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-subtle); }
 
-    /* ── RIGHT PANEL ── */
+    /* RIGHT PANEL */
     .panel-right {
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      padding: 32px; position: relative;
+      padding: 24px; position: relative;
       background: radial-gradient(ellipse at center, var(--surface) 0%, var(--bg) 70%);
       min-height: 500px;
     }
@@ -262,15 +358,16 @@
     .empty-state { text-align: center; opacity: 0.7; }
     .empty-icon { font-size: 64px; margin-bottom: 16px; filter: grayscale(0.3); }
     .empty-title { font-size: 18px; font-weight: 600; color: var(--text-dim); margin-bottom: 8px; }
-    .empty-desc { font-size: 13px; color: var(--text-dim); max-width: 300px; line-height: 1.6; }
+    .empty-desc { font-size: 13px; color: var(--text-dim); max-width: 320px; line-height: 1.6; }
 
-    /* ── RESULT ── */
-    .result-container { display: none; text-align: center; width: 100%; max-width: 680px; }
-    .result-img {
+    .result-container { display: none; text-align: center; width: 100%; max-width: 720px; }
+    .result-img, .result-video {
       width: 100%; border-radius: var(--radius-lg);
       border: 1px solid var(--border);
       box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px var(--gold-glow);
       animation: fadeScale 0.4s ease;
+      max-height: 75vh; object-fit: contain;
+      background: #000;
     }
     @keyframes fadeScale {
       from { opacity: 0; transform: scale(0.95); }
@@ -280,8 +377,12 @@
       display: flex; gap: 8px; justify-content: center;
       margin-top: 16px; flex-wrap: wrap;
     }
+    .result-meta {
+      margin-top: 10px; font-size: 11px; color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
 
-    /* ── HISTORY ── */
+    /* HISTORY */
     .history-section { margin-top: auto; padding-top: 16px; }
     .history-row {
       display: flex; gap: 6px; overflow-x: auto;
@@ -291,22 +392,31 @@
       min-width: 60px; width: 60px; height: 60px; border-radius: 8px;
       overflow: hidden; cursor: pointer; flex-shrink: 0;
       border: 2px solid transparent; transition: all 0.2s;
-      opacity: 0.7;
+      opacity: 0.7; position: relative;
     }
     .history-thumb:hover { opacity: 1; border-color: var(--border-light); }
     .history-thumb.active { border-color: var(--gold); opacity: 1; }
-    .history-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .history-thumb img, .history-thumb video {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .history-thumb .vid-badge {
+      position: absolute; bottom: 2px; right: 2px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: rgba(0,0,0,0.8); display: flex;
+      align-items: center; justify-content: center;
+      font-size: 9px; backdrop-filter: blur(6px);
+    }
 
-    /* ── ERROR ── */
+    /* ERROR */
     .error-bar {
-      display: none; padding: 10px 16px; margin: 0 24px;
+      display: none; padding: 10px 16px; margin: 10px 24px 0;
       background: rgba(255,68,85,0.1); border: 1px solid rgba(255,68,85,0.25);
       border-radius: var(--radius); color: var(--red);
       font-size: 13px; line-height: 1.4;
     }
     .error-bar.show { display: block; }
 
-    /* ── SPINNER ── */
+    /* SPINNER */
     @keyframes spin { to { transform: rotate(360deg); } }
     .spinner {
       width: 16px; height: 16px;
@@ -316,7 +426,6 @@
       vertical-align: middle; margin-right: 8px;
     }
 
-    /* ── STATUS DOT ── */
     .status-dot {
       width: 7px; height: 7px; border-radius: 50%;
       background: var(--red); display: inline-block;
@@ -325,7 +434,6 @@
     .status-dot.connected { background: var(--green); }
     .status-text { font-size: 12px; color: var(--text-dim); font-weight: 500; }
 
-    /* ── AMBIENT ── */
     .glow-1 {
       position: fixed; top: -250px; right: -150px;
       width: 600px; height: 600px;
@@ -339,29 +447,216 @@
       pointer-events: none; z-index: 0; opacity: 0.4;
     }
 
-    /* ── LOADING OVERLAY ── */
+    /* LOADING OVERLAY */
     .loading-overlay {
       display: none; position: absolute; inset: 0;
-      background: rgba(8,8,13,0.85); backdrop-filter: blur(8px);
+      background: rgba(8,8,13,0.9); backdrop-filter: blur(10px);
       z-index: 50; flex-direction: column;
       align-items: center; justify-content: center;
+      padding: 24px;
     }
     .loading-overlay.show { display: flex; }
     .loading-ring {
-      width: 56px; height: 56px; border: 3px solid var(--border);
+      width: 64px; height: 64px; border: 3px solid var(--border);
       border-top-color: var(--gold); border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
     .loading-text {
-      font-size: 14px; color: var(--text-mid); font-weight: 500;
+      font-size: 15px; color: var(--text); font-weight: 600;
       animation: pulse 2s ease-in-out infinite;
+      text-align: center;
+    }
+    .loading-sub {
+      font-size: 12px; color: var(--text-dim); margin-top: 8px;
+      font-family: 'JetBrains Mono', monospace; text-align: center;
+    }
+    .progress-bar {
+      width: 240px; height: 4px; background: var(--border);
+      border-radius: 2px; margin-top: 18px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; background: linear-gradient(90deg, var(--gold), #ffe082);
+      border-radius: 2px; transition: width 0.5s ease;
+      width: 0%;
     }
     @keyframes pulse {
-      0%, 100% { opacity: 0.6; } 50% { opacity: 1; }
+      0%, 100% { opacity: 0.7; } 50% { opacity: 1; }
     }
 
-    /* ── PWA BANNER ── */
+    /* LOCK SCREEN */
+    .lock-screen {
+      position: fixed; inset: 0; z-index: 1000;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px; gap: 24px;
+    }
+    .lock-screen.hidden { display: none; }
+    .lock-logo {
+      width: 72px; height: 72px; border-radius: 20px;
+      background: linear-gradient(135deg, var(--gold), #e8a000);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 38px;
+      box-shadow: 0 0 60px var(--gold-glow), inset 0 1px 0 rgba(255,255,255,0.2);
+      margin-bottom: 4px;
+    }
+    .lock-title {
+      font-size: 22px; font-weight: 700; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--gold) 20%, #ffe082 80%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .lock-sub {
+      font-size: 13px; color: var(--text-mid);
+      text-align: center; max-width: 280px; line-height: 1.5;
+      margin-top: -16px;
+    }
+    .pin-dots {
+      display: flex; gap: 14px; margin: 8px 0;
+    }
+    .pin-dots.shake { animation: shake 0.4s ease; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-6px); }
+      80% { transform: translateX(6px); }
+    }
+    .pin-dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid var(--border-light);
+      background: transparent;
+      transition: all 0.15s ease;
+    }
+    .pin-dot.filled {
+      background: var(--gold);
+      border-color: var(--gold);
+      box-shadow: 0 0 10px var(--gold-glow);
+    }
+    .pin-pad {
+      display: grid; grid-template-columns: repeat(3, 72px);
+      gap: 14px; margin-top: 6px;
+    }
+    .pin-key {
+      width: 72px; height: 72px; border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text); font-size: 24px; font-weight: 500;
+      font-family: 'Outfit', sans-serif;
+      cursor: pointer; user-select: none;
+      transition: all 0.12s ease;
+      display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pin-key:active {
+      transform: scale(0.94);
+      background: var(--gold-subtle);
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .pin-key.muted {
+      background: transparent; border-color: transparent;
+      color: var(--text-mid); font-size: 18px;
+    }
+    .pin-key.muted:active {
+      background: var(--surface-2); color: var(--gold);
+    }
+    .lock-error {
+      font-size: 13px; color: var(--red);
+      min-height: 18px; text-align: center;
+      font-weight: 500;
+    }
+    .lock-foot {
+      margin-top: 12px;
+      font-size: 12px; color: var(--text-dim);
+      text-align: center;
+    }
+    .lock-foot a {
+      color: var(--gold-dim); text-decoration: none;
+      cursor: pointer; font-weight: 500;
+    }
+    .lock-foot a:hover { color: var(--gold); }
+
+    /* CLOUD SYNC */
+    .cloud-section {
+      padding: 12px; background: var(--surface-2);
+      border: 1px solid var(--border); border-radius: 8px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .cloud-header {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .cloud-header .title {
+      font-size: 12px; font-weight: 600; color: var(--text);
+      letter-spacing: 0.3px; flex: 1;
+    }
+    .cloud-status-pill {
+      padding: 3px 9px; border-radius: 5px; font-size: 10px;
+      font-weight: 600; letter-spacing: 0.3px;
+    }
+    .cloud-status-pill.connected {
+      background: rgba(34,197,94,0.15); color: var(--green);
+    }
+    .cloud-status-pill.disconnected {
+      background: var(--surface-3); color: var(--text-dim);
+    }
+    .cloud-status-pill.syncing {
+      background: rgba(59,130,246,0.15); color: var(--blue);
+    }
+    .cloud-input {
+      width: 100%; padding: 8px 12px; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--bg);
+      color: var(--text); font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; outline: none;
+    }
+    .cloud-input:focus { border-color: var(--gold); }
+    .cloud-actions {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .cloud-help {
+      font-size: 10px; color: var(--text-dim); line-height: 1.5;
+      padding: 8px 10px; background: var(--bg);
+      border-radius: 6px; border-left: 2px solid var(--gold-dim);
+    }
+    .cloud-help a { color: var(--gold); text-decoration: none; }
+    .cloud-help.collapsed { display: none; }
+    .cloud-help-toggle {
+      background: none; border: none; color: var(--text-dim);
+      font-size: 10px; cursor: pointer; text-decoration: underline;
+      padding: 0; font-family: inherit;
+    }
+    .cloud-help-toggle:hover { color: var(--gold); }
+
+    /* Sync badge on history thumbs */
+    .history-thumb .sync-badge {
+      position: absolute; top: 2px; left: 2px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: rgba(34,197,94,0.9); display: flex;
+      align-items: center; justify-content: center;
+      font-size: 8px; color: #000; font-weight: 700;
+    }
+
+    /* PIN MANAGEMENT IN SETTINGS */
+    .pin-manage-row {
+      display: flex; gap: 8px; align-items: center;
+      padding: 10px 12px; background: var(--surface-2);
+      border-radius: 8px; border: 1px solid var(--border);
+    }
+    .pin-manage-row .label {
+      flex: 1; font-size: 12px; color: var(--text-mid); font-weight: 500;
+    }
+    .pin-manage-row .status-pill {
+      padding: 3px 9px; border-radius: 5px; font-size: 10px;
+      font-weight: 600; letter-spacing: 0.3px;
+    }
+    .pin-manage-row .status-pill.on {
+      background: rgba(34,197,94,0.15); color: var(--green);
+    }
+    .pin-manage-row .status-pill.off {
+      background: var(--surface-3); color: var(--text-dim);
+    }
+
+    /* INSTALL BANNER */
     .install-banner {
       display: none; padding: 10px 24px;
       background: var(--gold-subtle);
@@ -375,30 +670,50 @@
       font-family: 'Outfit', sans-serif; font-weight: 500;
     }
 
-    /* ── MOBILE ── */
+    /* MOBILE */
     @media (max-width: 840px) {
       .main { grid-template-columns: 1fr; }
       .panel-left {
         border-right: none; border-bottom: 1px solid var(--border);
-        padding: 18px 16px; gap: 14px;
+        padding: 16px; gap: 14px;
+        max-height: none;
       }
-      .panel-right { padding: 20px 16px; min-height: 45vh; }
-      .header { padding: 12px 16px; }
+      .panel-right { padding: 18px 14px; min-height: 50vh; }
+      .header { padding: 12px 14px; }
       .logo-text { font-size: 16px; }
-      .api-bar { flex-wrap: wrap; padding: 12px 16px; }
-      .api-bar input { width: 100%; }
+      .api-row { flex-wrap: wrap; }
+      .api-row label { min-width: 100%; }
       .presets-grid { grid-template-columns: 1fr 1fr 1fr; }
-      .preset-chip { padding: 7px 8px; font-size: 11px; }
+      .preset-chip { padding: 7px 4px; font-size: 10px; }
       .prompt-area { min-height: 80px; }
+      .thumb-grid { grid-template-columns: repeat(4, 1fr); }
     }
 
     @media (max-width: 480px) {
       .presets-grid { grid-template-columns: 1fr 1fr; }
       .logo-v { display: none; }
+      .opts-grid { grid-template-columns: 1fr; }
+      .thumb-grid { grid-template-columns: repeat(3, 1fr); }
     }
   </style>
 </head>
 <body>
+  <!-- LOCK SCREEN -->
+  <div id="lock-screen" class="lock-screen hidden">
+    <div class="lock-logo">🍌</div>
+    <div class="lock-title" id="lock-title">Enter PIN</div>
+    <div class="lock-sub" id="lock-sub"></div>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+    </div>
+    <div class="lock-error" id="lock-error"></div>
+    <div class="pin-pad" id="pin-pad"></div>
+    <div class="lock-foot" id="lock-foot"></div>
+  </div>
+
   <div class="glow-1"></div>
   <div class="glow-2"></div>
 
@@ -413,22 +728,84 @@
       <div class="logo">
         <div class="logo-icon">🍌</div>
         <span class="logo-text">Nano Banana Studio</span>
-        <span class="logo-v">V2</span>
+        <span class="logo-v">V3</span>
       </div>
       <div class="header-actions">
         <div style="display:flex;align-items:center;margin-right:8px;">
           <span id="status-dot" class="status-dot"></span>
-          <span id="status-text" class="status-text">No API Key</span>
+          <span id="status-text" class="status-text">No keys</span>
         </div>
-        <button class="btn-icon" onclick="toggleApiBar()" title="API Key">🔑</button>
+        <button class="btn-icon" id="lock-btn" onclick="lockApp()" title="Lock" style="display:none;">🔒</button>
+        <button class="btn-icon" onclick="toggleApiPanel()" title="Settings">⚙️</button>
       </div>
     </div>
 
-    <!-- API BAR -->
-    <div id="api-bar" class="api-bar">
-      <input type="password" id="api-input" placeholder="Paste your Gemini API key..." />
-      <button class="btn-sm" onclick="saveApiKey()">Save</button>
-      <button class="btn-sm" onclick="toggleApiBar()">Close</button>
+    <!-- API PANEL -->
+    <div id="api-panel" class="api-panel">
+      <div class="api-row">
+        <label>Gemini</label>
+        <input type="password" id="gemini-key-input" placeholder="Gemini API key (for Nano Banana + Veo)" />
+      </div>
+      <div class="api-row">
+        <label>OpenAI</label>
+        <input type="password" id="openai-key-input" placeholder="OpenAI API key (for GPT Image, Sora 2)" />
+      </div>
+      <div class="api-row">
+        <label>xAI Grok</label>
+        <input type="password" id="xai-key-input" placeholder="xAI API key (for Grok Imagine)" />
+      </div>
+      <div class="api-row">
+        <label>Replicate</label>
+        <input type="password" id="replicate-key-input" placeholder="Replicate API token (Flux, SDXL, Seedance, Kling)" />
+      </div>
+      <div class="api-row">
+        <label>fal.ai</label>
+        <input type="password" id="fal-key-input" placeholder="fal.ai API key (Flux, Recraft, Kling, Wan)" />
+      </div>
+      <div class="api-row">
+        <label>Flux (BFL)</label>
+        <input type="password" id="bfl-key-input" placeholder="Black Forest Labs key (Flux Pro, Ultra, Kontext)" />
+      </div>
+      <div class="api-hint">
+        <strong>Where to get keys:</strong> Gemini → <a href="https://aistudio.google.com/apikey" target="_blank">AI Studio</a> · OpenAI → <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a> · xAI → <a href="https://console.x.ai" target="_blank">console.x.ai</a> · Replicate → <a href="https://replicate.com/account/api-tokens" target="_blank">replicate.com</a> · fal.ai → <a href="https://fal.ai/dashboard/keys" target="_blank">fal.ai/dashboard</a> · Flux → <a href="https://dashboard.bfl.ai/" target="_blank">bfl.ai</a>. Keys stay in your browser only.
+      </div>
+      <div class="pin-manage-row">
+        <span class="label">PIN Lock</span>
+        <span class="status-pill" id="pin-status">OFF</span>
+        <button class="btn-sm" id="pin-set-btn" onclick="startSetupPin()">Set PIN</button>
+        <button class="btn-sm" id="pin-change-btn" onclick="startChangePin()" style="display:none;">Change</button>
+        <button class="btn-sm" id="pin-remove-btn" onclick="removePin()" style="display:none;">Remove</button>
+      </div>
+
+      <div class="cloud-section">
+        <div class="cloud-header">
+          <span class="title">☁ Google Drive Sync</span>
+          <span class="cloud-status-pill disconnected" id="cloud-status">Not Connected</span>
+        </div>
+        <input type="text" class="cloud-input" id="oauth-client-id" placeholder="OAuth Client ID (xxx.apps.googleusercontent.com)" />
+        <div class="cloud-actions">
+          <button class="btn-sm" id="cloud-connect-btn" onclick="driveConnect()">Connect</button>
+          <button class="btn-sm" id="cloud-disconnect-btn" onclick="driveDisconnect()" style="display:none;">Disconnect</button>
+          <button class="btn-sm" id="cloud-restore-btn" onclick="driveRestore()" style="display:none;">Restore from Drive</button>
+          <button class="cloud-help-toggle" onclick="toggleCloudHelp()">How to set this up?</button>
+        </div>
+        <div class="cloud-help collapsed" id="cloud-help">
+          <strong>One time setup (5 min):</strong><br/>
+          1. Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank">console.cloud.google.com/apis/credentials</a><br/>
+          2. Create a project (or pick one)<br/>
+          3. Click <strong>Create Credentials → OAuth Client ID</strong><br/>
+          4. App type: <strong>Web application</strong><br/>
+          5. Under <strong>Authorized JavaScript origins</strong>, add the URL where this app runs (e.g. <code>https://yourdomain.com</code> or <code>http://localhost</code>)<br/>
+          6. Enable the Drive API at <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank">this link</a><br/>
+          7. Copy the Client ID into the field above and click Connect<br/><br/>
+          Files save to a <strong>Nano Banana Studio</strong> folder in your Drive. The app only sees files it creates, not your whole Drive.
+        </div>
+      </div>
+
+      <div class="api-actions">
+        <button class="btn-sm" onclick="toggleApiPanel()">Close</button>
+        <button class="btn-sm primary" onclick="saveApiKeys()">Save</button>
+      </div>
     </div>
 
     <!-- ERROR -->
@@ -438,26 +815,34 @@
     <div class="main">
       <!-- LEFT -->
       <div class="panel-left">
-        <!-- MODE -->
-        <div class="mode-toggle">
-          <button class="mode-btn active" id="btn-generate" onclick="setMode('generate')">✦ Generate</button>
-          <button class="mode-btn" id="btn-edit" onclick="setMode('edit')">✎ Edit</button>
+        <!-- MODE TABS -->
+        <div class="mode-tabs">
+          <button class="mode-btn active" data-mode="generate" onclick="setMode('generate')">✦ Generate</button>
+          <button class="mode-btn" data-mode="edit" onclick="setMode('edit')">✎ Edit / Merge</button>
+          <button class="mode-btn" data-mode="video" onclick="setMode('video')">▶ Video</button>
         </div>
 
-        <!-- UPLOAD (edit mode) -->
+        <!-- PROVIDER -->
+        <div id="provider-section">
+          <div class="section-label">Provider</div>
+          <div class="provider-row" id="provider-row"></div>
+        </div>
+
+        <!-- IMAGES -->
         <div id="upload-section" style="display:none;">
-          <div class="section-label">Source Image</div>
+          <div class="section-label">
+            <span id="upload-label-text">Source Image</span>
+            <span class="badge" id="upload-count">0</span>
+          </div>
           <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
             <div id="upload-placeholder">
               <div class="upload-icon">📁</div>
-              <div class="upload-label">Drop an image or <span>browse</span></div>
-            </div>
-            <div class="upload-preview" id="upload-preview">
-              <img id="preview-img" src="" alt="preview" />
-              <button class="upload-remove" onclick="event.stopPropagation();removeUpload()">✕</button>
+              <div class="upload-label">Drop images or <span>browse</span></div>
+              <div class="upload-label-sm" id="upload-help">Up to 4 images for merging</div>
             </div>
           </div>
-          <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFile(this)" />
+          <div class="thumb-grid" id="thumb-grid" style="display:none;"></div>
+          <input type="file" id="file-input" accept="image/*" multiple style="display:none" onchange="handleFiles(this)" />
         </div>
 
         <!-- PROMPT -->
@@ -466,22 +851,49 @@
           <textarea class="prompt-area" id="prompt-input" placeholder="Describe what you want to create..."></textarea>
         </div>
 
-        <!-- STYLE PRESETS -->
-        <div>
+        <!-- VIDEO OPTIONS -->
+        <div id="video-options" style="display:none;">
+          <div class="section-label">Video Settings</div>
+          <div class="opts-grid">
+            <div class="opt-block">
+              <div class="lbl">Aspect</div>
+              <select id="video-aspect">
+                <option value="16:9">16:9 Landscape</option>
+                <option value="9:16">9:16 Portrait</option>
+              </select>
+            </div>
+            <div class="opt-block">
+              <div class="lbl">Resolution</div>
+              <select id="video-resolution">
+                <option value="720p">720p</option>
+                <option value="1080p">1080p</option>
+              </select>
+            </div>
+          </div>
+          <div class="opt-block" style="margin-top:8px;">
+            <div class="lbl">People Generation</div>
+            <select id="video-people">
+              <option value="allow_all">Allow All</option>
+              <option value="allow_adult">Adults Only</option>
+              <option value="dont_allow">Don't Allow</option>
+            </select>
+          </div>
+          <div class="toggle-row" id="audio-toggle-wrap">
+            <input type="checkbox" id="video-audio" checked />
+            <label for="video-audio">Generate audio (Veo 3 only)</label>
+          </div>
+        </div>
+
+        <!-- IMAGE PRESETS -->
+        <div id="presets-section">
           <div class="section-label">Style Presets</div>
           <div class="presets-grid" id="presets-grid"></div>
         </div>
 
-        <!-- MODEL SELECTOR -->
+        <!-- MODEL -->
         <div>
           <div class="section-label">Model</div>
-          <div class="model-select-wrap">
-            <select id="model-select" class="model-select">
-              <option value="gemini-2.5-flash-image">🍌 Nano Banana (Fast / Free)</option>
-              <option value="gemini-3.1-flash-image-preview" selected>🍌 Nano Banana 2 (Best)</option>
-              <option value="gemini-3-pro-image-preview">🍌 Nano Banana Pro (Studio)</option>
-            </select>
-          </div>
+          <select id="model-select" class="model-select"></select>
         </div>
 
         <!-- GENERATE -->
@@ -491,7 +903,10 @@
 
         <!-- HISTORY -->
         <div class="history-section" id="history-section" style="display:none;">
-          <div class="section-label">History</div>
+          <div class="section-label">
+            History
+            <button class="btn-sm" style="margin-left:auto;padding:3px 10px;font-size:10px;" onclick="clearHistory()">Clear</button>
+          </div>
           <div class="history-row" id="history-row"></div>
         </div>
       </div>
@@ -500,21 +915,27 @@
       <div class="panel-right">
         <div class="loading-overlay" id="loading-overlay">
           <div class="loading-ring"></div>
-          <div class="loading-text" id="loading-text">Generating your image...</div>
+          <div class="loading-text" id="loading-text">Generating...</div>
+          <div class="loading-sub" id="loading-sub"></div>
+          <div class="progress-bar" id="progress-bar" style="display:none;">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
         </div>
 
         <div class="empty-state" id="empty-state">
           <div class="empty-icon">🍌</div>
           <div class="empty-title">Ready to create</div>
-          <div class="empty-desc">Write a prompt and hit Generate, or upload an image to edit with AI.</div>
+          <div class="empty-desc">Generate images, merge multiple photos with AI, or create video clips with Veo. Add your keys to get started.</div>
         </div>
 
         <div class="result-container" id="result-container">
-          <img class="result-img" id="result-img" src="" alt="Generated" />
+          <img class="result-img" id="result-img" style="display:none;" alt="Generated" />
+          <video class="result-video" id="result-video" style="display:none;" controls autoplay loop></video>
+          <div class="result-meta" id="result-meta"></div>
           <div class="result-actions">
-            <button class="btn-sm" onclick="downloadImage()">⬇ Download</button>
-            <button class="btn-sm" onclick="useAsInput()">↻ Use as Input</button>
-            <button class="btn-sm" onclick="copyImage()">📋 Copy</button>
+            <button class="btn-sm" onclick="downloadResult()">⬇ Download</button>
+            <button class="btn-sm" id="use-input-btn" onclick="useAsInput()">↻ Use as Input</button>
+            <button class="btn-sm" id="copy-btn" onclick="copyResult()">📋 Copy</button>
             <button class="btn-sm" onclick="fullscreen()">⛶ Fullscreen</button>
           </div>
         </div>
@@ -523,144 +944,1092 @@
   </div>
 
   <script>
-    // ═══ STATE ═══
-    let apiKey = "";
-    let mode = "generate";
-    let uploadedImageData = null;
-    let generatedImageSrc = null;
-    let activePreset = null;
-    let history = [];
+    // ═══════════════════════════════════════════════════
+    //   STATE
+    // ═══════════════════════════════════════════════════
+    const state = {
+      geminiKey: "",
+      openaiKey: "",
+      xaiKey: "",
+      replicateKey: "",
+      falKey: "",
+      bflKey: "",
+      mode: "generate",            // generate | edit | video
+      provider: "gemini",          // gemini | openai | grok | replicate | fal | bfl
+      accessLevel: "full",         // full | nano
+      uploadedImages: [],          // [{ base64, mimeType, dataUrl }]
+      currentResult: null,         // { type: 'image'|'video', src, prompt, model }
+      activePreset: null,
+      history: [],                 // [{ id, type, src, prompt, model, time }]
+    };
 
-    const LOADING_MSGS = [
-      "Peeling the pixels...",
-      "Mashing the banana...",
-      "Rendering your vision...",
-      "Almost ripe...",
-      "Adding the finishing peel..."
-    ];
+    const MAX_IMAGES = 4;
 
-    // ═══ STYLE PRESETS ═══
+    const LOADING_MSGS = {
+      image: ["Peeling the pixels...", "Mashing the banana...", "Rendering your vision...", "Almost ripe...", "Adding the finishing peel..."],
+      video: ["Warming up the projector...", "Frame by frame...", "Painting motion...", "Stitching the scenes...", "Rolling the credits...", "Polishing each pixel..."],
+    };
+
+    // ═══════════════════════════════════════════════════
+    //   PROVIDERS & MODELS
+    // ═══════════════════════════════════════════════════
+    const PROVIDERS = {
+      generate: [
+        { id: "gemini", label: "Gemini" },
+        { id: "openai", label: "OpenAI" },
+        { id: "grok", label: "Grok" },
+        { id: "replicate", label: "Replicate" },
+        { id: "fal", label: "fal.ai" },
+        { id: "bfl", label: "Flux" },
+      ],
+      edit: [
+        { id: "gemini", label: "Gemini" },
+        { id: "openai", label: "OpenAI" },
+        { id: "grok", label: "Grok" },
+        { id: "replicate", label: "Replicate" },
+        { id: "fal", label: "fal.ai" },
+        { id: "bfl", label: "Flux" },
+      ],
+      video: [
+        { id: "gemini", label: "Veo (Gemini)" },
+        { id: "openai", label: "Sora 2 (OpenAI)" },
+        { id: "replicate", label: "Replicate" },
+        { id: "fal", label: "fal.ai" },
+      ],
+    };
+
+    const MODELS = {
+      gemini: {
+        generate: [
+          { value: "gemini-2.5-flash-image", label: "🍌 Nano Banana (Fast)" },
+          { value: "gemini-3.1-flash-image-preview", label: "🍌 Nano Banana 2 (Best)" },
+          { value: "gemini-3-pro-image-preview", label: "🍌 Nano Banana Pro" },
+        ],
+        edit: [
+          { value: "gemini-2.5-flash-image", label: "🍌 Nano Banana (Fast)" },
+          { value: "gemini-3.1-flash-image-preview", label: "🍌 Nano Banana 2 (Best)" },
+          { value: "gemini-3-pro-image-preview", label: "🍌 Nano Banana Pro" },
+        ],
+        video: [
+          { value: "veo-3.0-generate-001", label: "🎬 Veo 3 (with audio)" },
+          { value: "veo-3.0-fast-generate-001", label: "⚡ Veo 3 Fast" },
+          { value: "veo-2.0-generate-001", label: "🎬 Veo 2 (silent)" },
+        ],
+      },
+      openai: {
+        generate: [
+          { value: "gpt-image-1", label: "🖼 GPT Image 1" },
+          { value: "dall-e-3", label: "🖼 DALL·E 3" },
+        ],
+        edit: [
+          { value: "gpt-image-1", label: "🖼 GPT Image 1 (Edit)" },
+        ],
+        video: [
+          { value: "sora-2", label: "🎬 Sora 2" },
+          { value: "sora-2-pro", label: "🎬 Sora 2 Pro" },
+        ],
+      },
+      grok: {
+        generate: [
+          { value: "grok-imagine-image-quality", label: "✨ Grok Imagine (Quality)" },
+          { value: "grok-2-image", label: "✨ Grok 2 Image" },
+        ],
+        edit: [
+          { value: "grok-imagine-image-quality", label: "✨ Grok Imagine (Edit)" },
+        ],
+      },
+      replicate: {
+        generate: [
+          { value: "black-forest-labs/flux-1.1-pro", label: "🚀 Flux 1.1 Pro" },
+          { value: "black-forest-labs/flux-schnell", label: "⚡ Flux Schnell (Fast)" },
+          { value: "black-forest-labs/flux-dev", label: "🎨 Flux Dev" },
+          { value: "recraft-ai/recraft-v3", label: "🎨 Recraft V3" },
+        ],
+        edit: [
+          { value: "black-forest-labs/flux-kontext-pro", label: "🎨 Flux Kontext Pro" },
+          { value: "black-forest-labs/flux-kontext-max", label: "💎 Flux Kontext Max" },
+        ],
+        video: [
+          { value: "bytedance/seedance-1-pro", label: "🎬 Seedance 1 Pro" },
+          { value: "kwaivgi/kling-v1.6-pro", label: "🎬 Kling 1.6 Pro" },
+          { value: "minimax/hailuo-02", label: "🎬 Hailuo 02" },
+        ],
+      },
+      fal: {
+        generate: [
+          { value: "fal-ai/flux-pro/v1.1", label: "🚀 Flux Pro 1.1" },
+          { value: "fal-ai/flux/schnell", label: "⚡ Flux Schnell" },
+          { value: "fal-ai/flux/dev", label: "🎨 Flux Dev" },
+          { value: "fal-ai/recraft-v3", label: "🎨 Recraft V3" },
+        ],
+        edit: [
+          { value: "fal-ai/flux-pro/kontext", label: "🎨 Flux Kontext Pro" },
+          { value: "fal-ai/flux-pro/kontext/max", label: "💎 Flux Kontext Max" },
+        ],
+        video: [
+          { value: "fal-ai/kling-video/v2.5/pro/text-to-video", label: "🎬 Kling 2.5 Pro" },
+          { value: "fal-ai/wan-pro/text-to-video", label: "🎬 Wan Pro" },
+        ],
+      },
+      bfl: {
+        generate: [
+          { value: "flux-pro-1.1", label: "🚀 Flux Pro 1.1" },
+          { value: "flux-pro-1.1-ultra", label: "💎 Flux Pro 1.1 Ultra" },
+          { value: "flux-dev", label: "🎨 Flux Dev" },
+        ],
+        edit: [
+          { value: "flux-kontext-pro", label: "🎨 Flux Kontext Pro" },
+          { value: "flux-kontext-max", label: "💎 Flux Kontext Max" },
+        ],
+      },
+    };
+
     const PRESETS = [
-      { id: "ghibli", label: "Studio Ghibli", prompt: "Transform into Studio Ghibli anime style with soft pastel colors, whimsical lighting, hand-drawn aesthetic, dreamy atmosphere" },
-      { id: "gta", label: "GTA V", prompt: "Apply GTA5 video game loading screen style with bold cinematic colors, dramatic shadows, exaggerated stylized realism" },
-      { id: "oil", label: "Oil Painting", prompt: "Transform into a rich oil painting with vivid color contrasts, thick impasto brushstrokes, classical artistic composition" },
-      { id: "cyber", label: "Cyberpunk", prompt: "Reimagine in cyberpunk style with neon lights, rain-soaked streets, holographic elements, high contrast dark futuristic atmosphere" },
-      { id: "pixel", label: "Pixel Art", prompt: "Convert to detailed pixel art style, 16-bit retro game aesthetic, clean pixel edges, limited color palette" },
-      { id: "water", label: "Watercolor", prompt: "Transform into a soft watercolor painting with bleeding edges, transparent washes, visible paper texture, gentle color transitions" },
-      { id: "comic", label: "Comic Book", prompt: "Apply bold comic book style with thick outlines, halftone dots, dynamic action poses, vibrant saturated colors, speech bubble ready" },
-      { id: "photo", label: "Cinematic", prompt: "Enhance to cinematic photography quality, shallow depth of field, dramatic lighting, film grain, anamorphic lens flare" },
-      { id: "minimal", label: "Minimalist", prompt: "Simplify to minimalist design with clean lines, flat colors, geometric shapes, maximum negative space, modern aesthetic" },
-      { id: "vaporwave", label: "Vaporwave", prompt: "Apply vaporwave aesthetic with pink and purple gradients, retro 80s elements, glitch effects, marble statues, grid landscapes" },
-      { id: "manga", label: "Manga", prompt: "Transform into Japanese manga black and white style with screen tones, speed lines, expressive eyes, dramatic shading" },
-      { id: "3d", label: "3D Render", prompt: "Convert to clean 3D rendered style, soft studio lighting, smooth materials, subtle reflections, Pixar-quality modeling" },
+      { id: "ghibli", label: "Studio Ghibli", prompt: "Studio Ghibli anime style, soft pastel colors, whimsical lighting, hand-drawn aesthetic, dreamy atmosphere" },
+      { id: "gta", label: "GTA V", prompt: "GTA5 video game loading screen style, bold cinematic colors, dramatic shadows, exaggerated stylized realism" },
+      { id: "oil", label: "Oil Painting", prompt: "Rich oil painting, vivid color contrasts, thick impasto brushstrokes, classical artistic composition" },
+      { id: "cyber", label: "Cyberpunk", prompt: "Cyberpunk style, neon lights, rain-soaked streets, holographic elements, dark futuristic atmosphere" },
+      { id: "pixel", label: "Pixel Art", prompt: "Detailed pixel art style, 16-bit retro game aesthetic, clean pixel edges, limited color palette" },
+      { id: "water", label: "Watercolor", prompt: "Soft watercolor painting, bleeding edges, transparent washes, visible paper texture, gentle color transitions" },
+      { id: "comic", label: "Comic Book", prompt: "Bold comic book style, thick outlines, halftone dots, dynamic action poses, vibrant saturated colors" },
+      { id: "photo", label: "Cinematic", prompt: "Cinematic photography quality, shallow depth of field, dramatic lighting, film grain, anamorphic lens flare" },
+      { id: "minimal", label: "Minimalist", prompt: "Minimalist design, clean lines, flat colors, geometric shapes, maximum negative space" },
+      { id: "vaporwave", label: "Vaporwave", prompt: "Vaporwave aesthetic, pink and purple gradients, retro 80s elements, glitch effects, grid landscapes" },
+      { id: "manga", label: "Manga", prompt: "Japanese manga black and white style, screen tones, speed lines, expressive eyes, dramatic shading" },
+      { id: "3d", label: "3D Render", prompt: "Clean 3D rendered style, soft studio lighting, smooth materials, subtle reflections, Pixar quality" },
     ];
 
-    // ═══ INIT ═══
-    function init() {
-      apiKey = localStorage.getItem("nb_api_key") || "";
-      updateStatus();
-      renderPresets();
-      loadHistory();
+    // ═══════════════════════════════════════════════════
+    //   INDEXEDDB
+    // ═══════════════════════════════════════════════════
+    const DB_NAME = "nano_banana_db";
+    const STORE = "history";
+    let db = null;
 
-      // Drag & drop
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = e => {
+          const d = e.target.result;
+          if (!d.objectStoreNames.contains(STORE)) {
+            const store = d.createObjectStore(STORE, { keyPath: "id" });
+            store.createIndex("time", "time");
+          }
+        };
+        req.onsuccess = e => { db = e.target.result; resolve(db); };
+        req.onerror = e => reject(e.target.error);
+      });
+    }
+
+    async function dbAddHistory(item) {
+      if (!db) return;
+      const tx = db.transaction(STORE, "readwrite");
+      tx.objectStore(STORE).put(item);
+      return new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = e => rej(e.target.error); });
+    }
+
+    async function dbGetHistory() {
+      if (!db) return [];
+      const tx = db.transaction(STORE, "readonly");
+      const store = tx.objectStore(STORE);
+      return new Promise((res, rej) => {
+        const req = store.getAll();
+        req.onsuccess = () => res(req.result.sort((a, b) => b.time - a.time).slice(0, 30));
+        req.onerror = e => rej(e.target.error);
+      });
+    }
+
+    async function dbClearHistory() {
+      if (!db) return;
+      const tx = db.transaction(STORE, "readwrite");
+      tx.objectStore(STORE).clear();
+      return new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = e => rej(e.target.error); });
+    }
+
+    async function dbTrim() {
+      if (!db) return;
+      const all = await dbGetHistory();
+      if (all.length <= 30) return;
+      const tx = db.transaction(STORE, "readwrite");
+      const store = tx.objectStore(STORE);
+      all.slice(30).forEach(it => store.delete(it.id));
+    }
+
+    // ═══════════════════════════════════════════════════
+    //   GOOGLE DRIVE SYNC
+    // ═══════════════════════════════════════════════════
+    const drive = {
+      clientId: "",
+      tokenClient: null,
+      token: null,         // { access_token, expires_at }
+      folderId: null,
+      autoSync: true,
+      syncedIds: new Set(), // ids we've already pushed to drive
+    };
+
+    const DRIVE_FOLDER_NAME = "Nano Banana Studio";
+    const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+
+    function loadDriveState() {
+      drive.clientId = localStorage.getItem("nb_drive_client_id") || "";
+      drive.folderId = localStorage.getItem("nb_drive_folder_id") || null;
+      drive.autoSync = localStorage.getItem("nb_drive_autosync") !== "false";
+      try {
+        const t = JSON.parse(localStorage.getItem("nb_drive_token") || "null");
+        if (t && t.expires_at > Date.now()) drive.token = t;
+      } catch {}
+      try {
+        drive.syncedIds = new Set(JSON.parse(localStorage.getItem("nb_drive_synced") || "[]"));
+      } catch { drive.syncedIds = new Set(); }
+    }
+
+    function saveSyncedIds() {
+      localStorage.setItem("nb_drive_synced", JSON.stringify([...drive.syncedIds].slice(-200)));
+    }
+
+    function setCloudStatus(label, cls) {
+      const el = document.getElementById("cloud-status");
+      el.textContent = label;
+      el.className = `cloud-status-pill ${cls}`;
+    }
+
+    function updateCloudUI() {
+      const idInput = document.getElementById("oauth-client-id");
+      idInput.value = drive.clientId;
+
+      const connected = !!drive.token;
+      document.getElementById("cloud-connect-btn").style.display = connected ? "none" : "";
+      document.getElementById("cloud-disconnect-btn").style.display = connected ? "" : "none";
+      document.getElementById("cloud-restore-btn").style.display = connected ? "" : "none";
+
+      if (connected) setCloudStatus("Connected", "connected");
+      else setCloudStatus("Not Connected", "disconnected");
+    }
+
+    window.toggleCloudHelp = function() {
+      document.getElementById("cloud-help").classList.toggle("collapsed");
+    };
+
+    function waitForGsi(timeoutMs = 5000) {
+      return new Promise((resolve, reject) => {
+        if (window.google?.accounts?.oauth2) return resolve();
+        const start = Date.now();
+        const iv = setInterval(() => {
+          if (window.google?.accounts?.oauth2) { clearInterval(iv); resolve(); }
+          else if (Date.now() - start > timeoutMs) {
+            clearInterval(iv);
+            reject(new Error("Google Identity Services failed to load. Check your connection."));
+          }
+        }, 100);
+      });
+    }
+
+    function initTokenClient(clientId) {
+      drive.tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: DRIVE_SCOPE,
+        callback: () => {}, // overridden per request
+      });
+    }
+
+    function requestToken(prompt = "") {
+      return new Promise((resolve, reject) => {
+        if (!drive.tokenClient) return reject(new Error("Drive not initialized"));
+        drive.tokenClient.callback = (resp) => {
+          if (resp.error) return reject(new Error(resp.error_description || resp.error));
+          const token = {
+            access_token: resp.access_token,
+            expires_at: Date.now() + ((resp.expires_in || 3600) - 60) * 1000,
+          };
+          drive.token = token;
+          localStorage.setItem("nb_drive_token", JSON.stringify(token));
+          resolve(token);
+        };
+        try {
+          drive.tokenClient.requestAccessToken({ prompt });
+        } catch (e) { reject(e); }
+      });
+    }
+
+    async function ensureToken() {
+      if (drive.token && drive.token.expires_at > Date.now() + 30000) return drive.token;
+      // Try silent refresh first
+      try { return await requestToken(""); } catch { }
+      throw new Error("Drive session expired. Click Connect again.");
+    }
+
+    window.driveConnect = async function() {
+      hideError();
+      const id = document.getElementById("oauth-client-id").value.trim();
+      if (!id) { showError("Paste your OAuth Client ID first."); return; }
+      drive.clientId = id;
+      localStorage.setItem("nb_drive_client_id", id);
+
+      try {
+        setCloudStatus("Loading...", "syncing");
+        await waitForGsi();
+        initTokenClient(id);
+        await requestToken("consent");
+        await ensureFolder();
+        updateCloudUI();
+        flashStatus("Drive connected ✓");
+      } catch (e) {
+        setCloudStatus("Failed", "disconnected");
+        showError(`Drive connect failed: ${e.message}`);
+      }
+    };
+
+    window.driveDisconnect = function() {
+      if (drive.token?.access_token) {
+        google?.accounts?.oauth2?.revoke(drive.token.access_token, () => {});
+      }
+      drive.token = null;
+      drive.folderId = null;
+      drive.syncedIds = new Set();
+      localStorage.removeItem("nb_drive_token");
+      localStorage.removeItem("nb_drive_folder_id");
+      localStorage.removeItem("nb_drive_synced");
+      updateCloudUI();
+      flashStatus("Drive disconnected");
+    };
+
+    async function driveApi(path, opts = {}) {
+      const token = await ensureToken();
+      const headers = { "Authorization": `Bearer ${token.access_token}`, ...(opts.headers || {}) };
+      const resp = await fetch(`https://www.googleapis.com${path}`, { ...opts, headers });
+      if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error(`Drive API ${resp.status}: ${txt.slice(0, 200)}`);
+      }
+      return resp;
+    }
+
+    async function ensureFolder() {
+      if (drive.folderId) {
+        try {
+          const r = await driveApi(`/drive/v3/files/${drive.folderId}?fields=id,trashed`);
+          const d = await r.json();
+          if (!d.trashed) return drive.folderId;
+        } catch {}
+      }
+      // Search
+      const q = encodeURIComponent(`mimeType='application/vnd.google-apps.folder' and name='${DRIVE_FOLDER_NAME}' and trashed=false`);
+      const sr = await driveApi(`/drive/v3/files?q=${q}&fields=files(id,name)`);
+      const sd = await sr.json();
+      if (sd.files?.length > 0) {
+        drive.folderId = sd.files[0].id;
+      } else {
+        // Create
+        const cr = await driveApi(`/drive/v3/files`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: DRIVE_FOLDER_NAME,
+            mimeType: "application/vnd.google-apps.folder",
+          }),
+        });
+        const cd = await cr.json();
+        drive.folderId = cd.id;
+      }
+      localStorage.setItem("nb_drive_folder_id", drive.folderId);
+      return drive.folderId;
+    }
+
+    async function dataUrlToBlob(dataUrl) {
+      const r = await fetch(dataUrl);
+      return r.blob();
+    }
+
+    async function driveUpload(item) {
+      const folder = await ensureFolder();
+      const blob = await dataUrlToBlob(item.src);
+      const ext = item.type === "video" ? "mp4" : "png";
+      const name = `nbs-${item.type}-${item.id}.${ext}`;
+
+      const meta = {
+        name,
+        parents: [folder],
+        description: JSON.stringify({
+          id: item.id, type: item.type, prompt: item.prompt,
+          model: item.model, time: item.time,
+        }),
+      };
+
+      const form = new FormData();
+      form.append("metadata", new Blob([JSON.stringify(meta)], { type: "application/json" }));
+      form.append("file", blob);
+
+      const token = await ensureToken();
+      const resp = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name`,
+        {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token.access_token}` },
+          body: form,
+        }
+      );
+      if (!resp.ok) throw new Error(`Upload failed: ${resp.status}`);
+      drive.syncedIds.add(item.id);
+      saveSyncedIds();
+      return resp.json();
+    }
+
+    async function syncToCloud(item) {
+      if (!drive.token || !drive.autoSync) return;
+      if (drive.syncedIds.has(item.id)) return;
+      try {
+        await driveUpload(item);
+        renderHistory(); // refresh sync badges
+      } catch (e) {
+        console.warn("Drive upload failed", e);
+      }
+    }
+
+    window.driveRestore = async function() {
+      hideError();
+      try {
+        setCloudStatus("Restoring...", "syncing");
+        const folder = await ensureFolder();
+        const q = encodeURIComponent(`'${folder}' in parents and trashed=false`);
+        const lr = await driveApi(
+          `/drive/v3/files?q=${q}&fields=files(id,name,description,mimeType,createdTime)&orderBy=createdTime desc&pageSize=100`
+        );
+        const ld = await lr.json();
+        const files = ld.files || [];
+
+        const existing = new Set(state.history.map(h => h.id));
+        let added = 0;
+
+        for (const file of files) {
+          let metadata;
+          try { metadata = JSON.parse(file.description || "{}"); } catch { continue; }
+          if (!metadata.id || existing.has(metadata.id)) continue;
+
+          const dl = await driveApi(`/drive/v3/files/${file.id}?alt=media`);
+          const blob = await dl.blob();
+          const dataUrl = await blobToDataUrl(blob);
+
+          const item = {
+            id: metadata.id,
+            type: metadata.type || (file.mimeType?.startsWith("video") ? "video" : "image"),
+            src: dataUrl,
+            prompt: metadata.prompt || "",
+            model: metadata.model || "",
+            time: metadata.time || new Date(file.createdTime).getTime(),
+          };
+          await dbAddHistory(item);
+          drive.syncedIds.add(item.id);
+          added++;
+        }
+        saveSyncedIds();
+
+        state.history = await dbGetHistory();
+        renderHistory();
+        updateCloudUI();
+        flashStatus(added > 0 ? `Restored ${added} item${added > 1 ? "s" : ""} ✓` : "Already up to date");
+      } catch (e) {
+        updateCloudUI();
+        showError(`Restore failed: ${e.message}`);
+      }
+    };
+
+    // Background sync any unsynced local items when we connect
+    async function backfillCloud() {
+      if (!drive.token || !drive.autoSync) return;
+      const unsynced = state.history.filter(h => !drive.syncedIds.has(h.id));
+      for (const item of unsynced) {
+        try { await driveUpload(item); } catch (e) { console.warn("Backfill failed for", item.id, e); break; }
+      }
+      renderHistory();
+    }
+
+    // ═══════════════════════════════════════════════════
+    //   PIN LOCK
+    // ═══════════════════════════════════════════════════
+    const PIN_LEVELS = {
+      "9182": "full",   // full access to all providers
+      "2026": "nano",   // limited: Nano Banana (Gemini) only
+    };
+
+    const pinState = {
+      mode: null,        // unlock | setup-1 | setup-2 | change-current | change-1 | change-2
+      buffer: "",
+      firstEntry: "",
+      attempts: 0,
+    };
+
+    async function hashPin(pin) {
+      const buf = new TextEncoder().encode(pin + "::nano-banana-salt");
+      const hash = await crypto.subtle.digest("SHA-256", buf);
+      return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    function getPinLevel(pin) {
+      return PIN_LEVELS[pin] || null;
+    }
+
+    function hasPin() {
+      // Lock is always on because of hardcoded PINs
+      return Object.keys(PIN_LEVELS).length > 0 || !!localStorage.getItem("nb_pin_hash");
+    }
+
+    async function verifyPin(pin) {
+      const level = getPinLevel(pin);
+      if (level) return { valid: true, level };
+      const stored = localStorage.getItem("nb_pin_hash");
+      if (!stored) return { valid: false };
+      if ((await hashPin(pin)) === stored) return { valid: true, level: "full" };
+      return { valid: false };
+    }
+
+    function renderPinPad() {
+      const pad = document.getElementById("pin-pad");
+      const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "✕", "0", "⌫"];
+      pad.innerHTML = keys.map(k => {
+        const muted = (k === "✕" || k === "⌫") ? "muted" : "";
+        const action = k === "⌫" ? "pinDelete()" : k === "✕" ? "pinCancel()" : `pinDigit('${k}')`;
+        return `<button class="pin-key ${muted}" onclick="${action}">${k}</button>`;
+      }).join("");
+    }
+
+    function updatePinDots() {
+      const dots = document.querySelectorAll("#pin-dots .pin-dot");
+      dots.forEach((d, i) => d.classList.toggle("filled", i < pinState.buffer.length));
+    }
+
+    function shakeDots() {
+      const c = document.getElementById("pin-dots");
+      c.classList.remove("shake");
+      void c.offsetWidth;
+      c.classList.add("shake");
+    }
+
+    function setLockMessage(title, sub, error = "") {
+      document.getElementById("lock-title").textContent = title;
+      document.getElementById("lock-sub").textContent = sub;
+      document.getElementById("lock-error").textContent = error;
+    }
+
+    function setLockFoot(html) {
+      document.getElementById("lock-foot").innerHTML = html;
+    }
+
+    function showLockScreen(mode) {
+      pinState.mode = mode;
+      pinState.buffer = "";
+      pinState.firstEntry = "";
+      updatePinDots();
+      renderPinPad();
+
+      const screen = document.getElementById("lock-screen");
+      screen.classList.remove("hidden");
+
+      if (mode === "unlock") {
+        setLockMessage("Welcome Back", "Enter your 4 digit PIN to unlock");
+        setLockFoot(`<a onclick="resetEverything()">Forgot? Reset everything</a>`);
+      } else if (mode === "setup-1") {
+        setLockMessage("Set a PIN", "Choose a 4 digit PIN to lock the app");
+        setLockFoot(`<a onclick="cancelLockFlow()">Cancel</a>`);
+      } else if (mode === "setup-2") {
+        setLockMessage("Confirm PIN", "Enter the same 4 digits again");
+        setLockFoot(`<a onclick="cancelLockFlow()">Cancel</a>`);
+      } else if (mode === "change-current") {
+        setLockMessage("Change PIN", "Enter your current PIN");
+        setLockFoot(`<a onclick="cancelLockFlow()">Cancel</a>`);
+      } else if (mode === "change-1") {
+        setLockMessage("New PIN", "Choose a new 4 digit PIN");
+        setLockFoot(`<a onclick="cancelLockFlow()">Cancel</a>`);
+      } else if (mode === "change-2") {
+        setLockMessage("Confirm New PIN", "Enter the new PIN again");
+        setLockFoot(`<a onclick="cancelLockFlow()">Cancel</a>`);
+      }
+    }
+
+    function hideLockScreen() {
+      document.getElementById("lock-screen").classList.add("hidden");
+      pinState.mode = null;
+      pinState.buffer = "";
+      pinState.firstEntry = "";
+    }
+
+    window.pinDigit = function(d) {
+      if (pinState.buffer.length >= 4) return;
+      pinState.buffer += d;
+      updatePinDots();
+      document.getElementById("lock-error").textContent = "";
+      if (pinState.buffer.length === 4) {
+        setTimeout(handlePinSubmit, 120);
+      }
+    };
+
+    window.pinDelete = function() {
+      pinState.buffer = pinState.buffer.slice(0, -1);
+      updatePinDots();
+    };
+
+    window.pinCancel = function() {
+      pinState.buffer = "";
+      updatePinDots();
+      document.getElementById("lock-error").textContent = "";
+    };
+
+    window.cancelLockFlow = function() {
+      // Only valid for setup/change flows, not initial unlock
+      if (pinState.mode === "unlock") return;
+      hideLockScreen();
+      // Reopen settings if we came from there
+      const panel = document.getElementById("api-panel");
+      if (!panel.classList.contains("show")) panel.classList.add("show");
+    };
+
+    async function handlePinSubmit() {
+      const pin = pinState.buffer;
+      const mode = pinState.mode;
+
+      if (mode === "unlock") {
+        const result = await verifyPin(pin);
+        if (result.valid) {
+          state.accessLevel = result.level;
+          hideLockScreen();
+          applyAccessLevel();
+          pinState.attempts = 0;
+        } else {
+          pinState.attempts++;
+          shakeDots();
+          pinState.buffer = "";
+          updatePinDots();
+          const left = Math.max(0, 8 - pinState.attempts);
+          setLockMessage("Welcome Back", "Enter your 4 digit PIN to unlock", `Wrong PIN. ${left} attempts left.`);
+          if (pinState.attempts >= 8) {
+            setTimeout(() => {
+              if (confirm("Too many wrong attempts. Reset the app and start fresh?")) resetEverything();
+            }, 400);
+          }
+        }
+      } else if (mode === "setup-1" || mode === "change-1") {
+        pinState.firstEntry = pin;
+        showLockScreen(mode === "setup-1" ? "setup-2" : "change-2");
+      } else if (mode === "setup-2" || mode === "change-2") {
+        if (pin === pinState.firstEntry) {
+          const hash = await hashPin(pin);
+          localStorage.setItem("nb_pin_hash", hash);
+          hideLockScreen();
+          updatePinUI();
+          // Brief confirmation
+          showError(""); // clear any
+          flashStatus(mode === "setup-2" ? "PIN set ✓" : "PIN changed ✓");
+        } else {
+          shakeDots();
+          pinState.buffer = "";
+          updatePinDots();
+          setLockMessage(mode === "setup-2" ? "Confirm PIN" : "Confirm New PIN", "Enter the same 4 digits again", "PINs didn't match. Try again.");
+          // Restart the confirm step
+          setTimeout(() => {
+            showLockScreen(mode === "setup-2" ? "setup-1" : "change-1");
+          }, 900);
+        }
+      } else if (mode === "change-current") {
+        const result = await verifyPin(pin);
+        if (result.valid) {
+          showLockScreen("change-1");
+        } else {
+          shakeDots();
+          pinState.buffer = "";
+          updatePinDots();
+          setLockMessage("Change PIN", "Enter your current PIN", "Wrong PIN. Try again.");
+        }
+      }
+    }
+
+    function flashStatus(msg) {
+      const txt = document.getElementById("status-text");
+      const orig = txt.textContent;
+      txt.textContent = msg;
+      txt.style.color = "var(--green)";
+      setTimeout(() => { txt.style.color = ""; updateStatus(); }, 1800);
+    }
+
+    window.lockApp = function() {
+      if (!hasPin()) return;
+      showLockScreen("unlock");
+    };
+
+    window.startSetupPin = function() {
+      document.getElementById("api-panel").classList.remove("show");
+      showLockScreen("setup-1");
+    };
+
+    window.startChangePin = function() {
+      document.getElementById("api-panel").classList.remove("show");
+      showLockScreen("change-current");
+    };
+
+    window.removePin = function() {
+      if (!confirm("Remove the PIN? Anyone with your phone will be able to open the app.")) return;
+      localStorage.removeItem("nb_pin_hash");
+      updatePinUI();
+      flashStatus("PIN removed");
+    };
+
+    window.resetEverything = async function() {
+      if (!confirm("This will erase your PIN, API keys, and history. Continue?")) return;
+      localStorage.clear();
+      try { await dbClearHistory(); } catch {}
+      location.reload();
+    };
+
+    function updatePinUI() {
+      const has = hasPin();
+      const hasUserPin = !!localStorage.getItem("nb_pin_hash");
+      document.getElementById("pin-status").textContent = has ? "ON" : "OFF";
+      document.getElementById("pin-status").className = `status-pill ${has ? "on" : "off"}`;
+      // Show "Add custom PIN" instead of "Set PIN" since hardcoded ones already exist
+      const setBtn = document.getElementById("pin-set-btn");
+      setBtn.textContent = hasUserPin ? "Set PIN" : "Add Custom PIN";
+      setBtn.style.display = hasUserPin ? "none" : "";
+      document.getElementById("pin-change-btn").style.display = hasUserPin ? "" : "none";
+      document.getElementById("pin-remove-btn").style.display = hasUserPin ? "" : "none";
+      document.getElementById("lock-btn").style.display = has ? "" : "none";
+    }
+
+    // Auto-lock when tab is hidden for a while
+    let _hideStart = null;
+    document.addEventListener("visibilitychange", () => {
+      if (!hasPin()) return;
+      if (document.hidden) {
+        _hideStart = Date.now();
+      } else if (_hideStart && Date.now() - _hideStart > 5 * 60 * 1000) {
+        // Re-lock if tab was hidden for more than 5 minutes
+        showLockScreen("unlock");
+      }
+      if (!document.hidden) _hideStart = null;
+    });
+
+    // Keyboard support for lock screen
+    document.addEventListener("keydown", e => {
+      if (document.getElementById("lock-screen").classList.contains("hidden")) return;
+      if (e.key >= "0" && e.key <= "9") { pinDigit(e.key); e.preventDefault(); }
+      else if (e.key === "Backspace") { pinDelete(); e.preventDefault(); }
+      else if (e.key === "Escape" && pinState.mode !== "unlock") { cancelLockFlow(); e.preventDefault(); }
+    });
+
+    // ═══════════════════════════════════════════════════
+    //   INIT
+    // ═══════════════════════════════════════════════════
+    async function init() {
+      // Show lock first if PIN is set
+      if (hasPin()) {
+        showLockScreen("unlock");
+      }
+      updatePinUI();
+
+      state.geminiKey = localStorage.getItem("nb_gemini_key") || localStorage.getItem("nb_api_key") || "";
+      state.openaiKey = localStorage.getItem("nb_openai_key") || "";
+      state.xaiKey = localStorage.getItem("nb_xai_key") || "";
+      state.replicateKey = localStorage.getItem("nb_replicate_key") || "";
+      state.falKey = localStorage.getItem("nb_fal_key") || "";
+      state.bflKey = localStorage.getItem("nb_bfl_key") || "";
+
+      try { await openDB(); state.history = await dbGetHistory(); } catch (e) { console.warn("DB init failed", e); }
+
+      loadDriveState();
+      updateCloudUI();
+      // Backfill in background if connected
+      if (drive.token && drive.clientId) {
+        waitForGsi().then(() => {
+          initTokenClient(drive.clientId);
+          backfillCloud();
+        }).catch(() => {});
+      }
+
+      updateStatus();
+      renderProviders();
+      renderPresets();
+      renderModels();
+      renderHistory();
+      updateModeUI();
+
       const zone = document.getElementById("upload-zone");
       zone.addEventListener("dragover", e => { e.preventDefault(); zone.classList.add("drag-over"); });
       zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
       zone.addEventListener("drop", e => {
         e.preventDefault(); zone.classList.remove("drag-over");
-        if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
+        if (e.dataTransfer.files.length) processFiles(e.dataTransfer.files);
       });
 
-      // Ctrl+Enter
       document.addEventListener("keydown", e => {
         if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleGenerate();
       });
 
-      // Paste image
       document.addEventListener("paste", e => {
         const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith("image/"));
         if (item) {
           const file = item.getAsFile();
-          if (file) { setMode("edit"); processFile(file); }
+          if (file && state.mode !== "generate") processFiles([file]);
+          else if (file && state.mode === "generate") { setMode("edit"); processFiles([file]); }
         }
       });
     }
 
-    // ═══ API KEY ═══
-    function toggleApiBar() {
-      const bar = document.getElementById("api-bar");
-      bar.classList.toggle("show");
-      if (bar.classList.contains("show")) {
-        const inp = document.getElementById("api-input");
-        inp.value = apiKey;
-        inp.focus();
+    // ═══════════════════════════════════════════════════
+    //   API KEYS
+    // ═══════════════════════════════════════════════════
+    function toggleApiPanel() {
+      const p = document.getElementById("api-panel");
+      p.classList.toggle("show");
+      if (p.classList.contains("show")) {
+        document.getElementById("gemini-key-input").value = state.geminiKey;
+        document.getElementById("openai-key-input").value = state.openaiKey;
+        document.getElementById("xai-key-input").value = state.xaiKey;
+        document.getElementById("replicate-key-input").value = state.replicateKey;
+        document.getElementById("fal-key-input").value = state.falKey;
+        document.getElementById("bfl-key-input").value = state.bflKey;
       }
     }
 
-    function saveApiKey() {
-      apiKey = document.getElementById("api-input").value.trim();
-      if (apiKey) {
-        localStorage.setItem("nb_api_key", apiKey);
-        updateStatus();
-        toggleApiBar();
-      }
+    function saveApiKeys() {
+      state.geminiKey = document.getElementById("gemini-key-input").value.trim();
+      state.openaiKey = document.getElementById("openai-key-input").value.trim();
+      state.xaiKey = document.getElementById("xai-key-input").value.trim();
+      state.replicateKey = document.getElementById("replicate-key-input").value.trim();
+      state.falKey = document.getElementById("fal-key-input").value.trim();
+      state.bflKey = document.getElementById("bfl-key-input").value.trim();
+      localStorage.setItem("nb_gemini_key", state.geminiKey);
+      localStorage.setItem("nb_openai_key", state.openaiKey);
+      localStorage.setItem("nb_xai_key", state.xaiKey);
+      localStorage.setItem("nb_replicate_key", state.replicateKey);
+      localStorage.setItem("nb_fal_key", state.falKey);
+      localStorage.setItem("nb_bfl_key", state.bflKey);
+      updateStatus();
+      toggleApiPanel();
     }
 
     function updateStatus() {
       const dot = document.getElementById("status-dot");
       const txt = document.getElementById("status-text");
-      if (apiKey) {
-        dot.classList.add("connected");
-        txt.textContent = "Connected";
-      } else {
-        dot.classList.remove("connected");
-        txt.textContent = "No API Key";
-      }
+      const all = [state.geminiKey, state.openaiKey, state.xaiKey, state.replicateKey, state.falKey, state.bflKey];
+      const count = all.filter(Boolean).length;
+      dot.classList.toggle("connected", count > 0);
+      if (count === 0) txt.textContent = "No keys";
+      else if (count === all.length) txt.textContent = "All connected";
+      else txt.textContent = `${count} key${count > 1 ? "s" : ""} ready`;
     }
 
-    // ═══ MODE ═══
+    // ═══════════════════════════════════════════════════
+    //   MODE & PROVIDER
+    // ═══════════════════════════════════════════════════
     function setMode(m) {
-      mode = m;
-      document.getElementById("btn-generate").classList.toggle("active", m === "generate");
-      document.getElementById("btn-edit").classList.toggle("active", m === "edit");
-      document.getElementById("upload-section").style.display = m === "edit" ? "block" : "none";
-      document.getElementById("generate-btn").textContent = m === "generate" ? "✦ Generate Image" : "✎ Edit Image";
-      document.getElementById("prompt-input").placeholder = m === "generate"
-        ? "Describe what you want to create..."
-        : "Describe how to edit or transform...";
+      // Block video mode in nano
+      if (state.accessLevel === "nano" && m === "video") return;
+
+      state.mode = m;
+      document.querySelectorAll(".mode-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.mode === m);
+      });
+
+      // Default provider when switching, respecting access level
+      const allowed = getAllowedProviders(m).map(p => p.id);
+      if (!allowed.includes(state.provider)) state.provider = allowed[0] || "gemini";
+
+      renderProviders();
+      renderModels();
+      updateModeUI();
     }
 
-    // ═══ UPLOAD ═══
-    function handleFile(input) {
-      if (input.files[0]) processFile(input.files[0]);
+    function setProvider(p) {
+      state.provider = p;
+      renderProviders();
+      renderModels();
+      updateModeUI();
     }
 
-    function processFile(file) {
-      if (!file.type.startsWith("image/")) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        const src = e.target.result;
-        const base64 = src.split(",")[1];
-        const mimeType = file.type;
-        uploadedImageData = { base64, mimeType };
+    function getAllowedProviders(mode) {
+      let opts = PROVIDERS[mode];
+      if (state.accessLevel === "nano") {
+        opts = opts.filter(o => o.id === "gemini");
+      }
+      return opts;
+    }
 
-        document.getElementById("preview-img").src = src;
-        document.getElementById("upload-placeholder").style.display = "none";
-        document.getElementById("upload-preview").style.display = "block";
-        document.getElementById("upload-zone").classList.add("has-image");
+    function applyAccessLevel() {
+      const isNano = state.accessLevel === "nano";
+
+      // Hide video tab in nano mode
+      const videoBtn = document.querySelector('.mode-btn[data-mode="video"]');
+      if (videoBtn) videoBtn.style.display = isNano ? "none" : "";
+
+      // Force out of video mode if currently there
+      if (isNano && state.mode === "video") {
+        setMode("generate");
+        return; // setMode triggers re-render
+      }
+
+      // Hide non-Gemini key inputs in nano mode
+      const otherKeyIds = ['openai-key-input', 'xai-key-input', 'replicate-key-input', 'fal-key-input', 'bfl-key-input'];
+      otherKeyIds.forEach(id => {
+        const row = document.getElementById(id)?.closest('.api-row');
+        if (row) row.style.display = isNano ? "none" : "";
+      });
+
+      // Hide PIN management + Drive sync sections in nano mode
+      const pinRow = document.querySelector('.pin-manage-row');
+      if (pinRow) pinRow.style.display = isNano ? "none" : "";
+      const cloudSec = document.querySelector('.cloud-section');
+      if (cloudSec) cloudSec.style.display = isNano ? "none" : "";
+
+      // Header badge
+      let badge = document.getElementById("access-badge");
+      if (isNano) {
+        if (!badge) {
+          badge = document.createElement("span");
+          badge.id = "access-badge";
+          badge.style.cssText = "padding: 3px 8px; border-radius: 5px; background: var(--gold-subtle); color: var(--gold); font-size: 10px; font-weight: 700; letter-spacing: 1px; margin-right: 8px; border: 1px solid var(--gold-dim);";
+          badge.textContent = "NANO";
+          document.querySelector(".header-actions").prepend(badge);
+        }
+      } else if (badge) {
+        badge.remove();
+      }
+
+      // Re-render providers and models with filter applied
+      // Make sure provider is allowed
+      const allowed = getAllowedProviders(state.mode).map(p => p.id);
+      if (!allowed.includes(state.provider)) state.provider = allowed[0] || "gemini";
+
+      renderProviders();
+      renderModels();
+    }
+
+    function renderProviders() {
+      const row = document.getElementById("provider-row");
+      const opts = getAllowedProviders(state.mode);
+      row.innerHTML = opts.map(o =>
+        `<button class="provider-pill ${state.provider === o.id ? 'active' : ''}" onclick="setProvider('${o.id}')">${o.label}</button>`
+      ).join("");
+      // Hide section if only one provider
+      document.getElementById("provider-section").style.display = opts.length > 1 ? "block" : "none";
+    }
+
+    function renderModels() {
+      const sel = document.getElementById("model-select");
+      const list = MODELS[state.provider]?.[state.mode] || [];
+      sel.innerHTML = list.map(m => `<option value="${m.value}">${m.label}</option>`).join("");
+    }
+
+    function updateModeUI() {
+      const m = state.mode;
+      const showUpload = m === "edit" || m === "video";
+      document.getElementById("upload-section").style.display = showUpload ? "block" : "none";
+      document.getElementById("video-options").style.display = m === "video" ? "block" : "none";
+      document.getElementById("presets-section").style.display = m === "video" ? "none" : "block";
+
+      // Upload labels
+      const labelText = document.getElementById("upload-label-text");
+      const helpText = document.getElementById("upload-help");
+      if (m === "edit") {
+        labelText.textContent = "Source Images";
+        helpText.textContent = "Up to 4 images for merging or transforming";
+      } else if (m === "video") {
+        labelText.textContent = "Reference Image (optional)";
+        helpText.textContent = "Animate a starting frame, or skip for text to video";
+      }
+
+      // Generate button
+      const btn = document.getElementById("generate-btn");
+      const labels = {
+        generate: "✦ Generate Image",
+        edit: state.uploadedImages.length > 1 ? "✦ Merge Images" : "✎ Edit Image",
+        video: "▶ Generate Video",
       };
-      reader.readAsDataURL(file);
+      btn.textContent = labels[m];
+
+      // Prompt placeholders
+      const prompts = {
+        generate: "Describe what you want to create...",
+        edit: state.uploadedImages.length > 1
+          ? "Describe how to merge or combine these images..."
+          : "Describe how to edit or transform...",
+        video: "Describe the scene, motion, camera moves, mood...",
+      };
+      document.getElementById("prompt-input").placeholder = prompts[m];
+
+      // Single image limit for video
+      if (m === "video" && state.uploadedImages.length > 1) {
+        state.uploadedImages = state.uploadedImages.slice(0, 1);
+      }
+
+      renderThumbs();
     }
 
-    function removeUpload() {
-      uploadedImageData = null;
-      document.getElementById("upload-placeholder").style.display = "";
-      document.getElementById("upload-preview").style.display = "none";
-      document.getElementById("upload-zone").classList.remove("has-image");
-      document.getElementById("file-input").value = "";
+    // ═══════════════════════════════════════════════════
+    //   FILES
+    // ═══════════════════════════════════════════════════
+    function handleFiles(input) {
+      if (input.files.length) processFiles(input.files);
+      input.value = "";
     }
 
-    // ═══ PRESETS ═══
+    function processFiles(files) {
+      const max = state.mode === "video" ? 1 : MAX_IMAGES;
+      const remaining = max - state.uploadedImages.length;
+      const toAdd = [...files].filter(f => f.type.startsWith("image/")).slice(0, remaining);
+
+      toAdd.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const dataUrl = e.target.result;
+          state.uploadedImages.push({
+            base64: dataUrl.split(",")[1],
+            mimeType: file.type,
+            dataUrl,
+          });
+          renderThumbs();
+          updateModeUI();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function removeImage(idx) {
+      state.uploadedImages.splice(idx, 1);
+      renderThumbs();
+      updateModeUI();
+    }
+
+    function renderThumbs() {
+      const max = state.mode === "video" ? 1 : MAX_IMAGES;
+      const grid = document.getElementById("thumb-grid");
+      const placeholder = document.getElementById("upload-placeholder");
+      const count = document.getElementById("upload-count");
+
+      count.textContent = state.uploadedImages.length;
+
+      if (state.uploadedImages.length === 0) {
+        grid.style.display = "none";
+        placeholder.style.display = "";
+        return;
+      }
+
+      grid.style.display = "grid";
+      placeholder.style.display = "none";
+
+      let html = state.uploadedImages.map((img, i) => `
+        <div class="thumb-item">
+          <img src="${img.dataUrl}" alt="" />
+          <button class="thumb-remove" onclick="event.stopPropagation();removeImage(${i})">✕</button>
+        </div>
+      `).join("");
+
+      if (state.uploadedImages.length < max) {
+        html += `<div class="thumb-add" onclick="event.stopPropagation();document.getElementById('file-input').click()">+</div>`;
+      }
+
+      grid.innerHTML = html;
+    }
+
+    // ═══════════════════════════════════════════════════
+    //   PRESETS
+    // ═══════════════════════════════════════════════════
     function renderPresets() {
       const grid = document.getElementById("presets-grid");
       grid.innerHTML = PRESETS.map(p =>
@@ -669,203 +2038,988 @@
     }
 
     function togglePreset(id) {
-      if (activePreset === id) {
-        activePreset = null;
-      } else {
-        activePreset = id;
-      }
+      state.activePreset = state.activePreset === id ? null : id;
       document.querySelectorAll(".preset-chip").forEach(el => {
-        el.classList.toggle("active", el.dataset.id === activePreset);
+        el.classList.toggle("active", el.dataset.id === state.activePreset);
       });
     }
 
-    // ═══ GENERATE ═══
+    // ═══════════════════════════════════════════════════
+    //   GENERATE DISPATCHER
+    // ═══════════════════════════════════════════════════
     async function handleGenerate() {
-      if (!apiKey) { showError("Add your Gemini API key first."); toggleApiBar(); return; }
-
-      let prompt = document.getElementById("prompt-input").value.trim();
-      if (!prompt && !activePreset) { showError("Enter a prompt or select a style preset."); return; }
-
-      // Append preset
-      if (activePreset) {
-        const preset = PRESETS.find(p => p.id === activePreset);
-        if (preset) {
-          prompt = prompt ? `${prompt}. ${preset.prompt}` : preset.prompt;
-        }
-      }
-
-      if (mode === "edit" && !uploadedImageData) {
-        showError("Upload an image to edit."); return;
-      }
-
-      setLoading(true);
       hideError();
+      let prompt = document.getElementById("prompt-input").value.trim();
+
+      if (state.activePreset && state.mode !== "video") {
+        const p = PRESETS.find(x => x.id === state.activePreset);
+        if (p) prompt = prompt ? `${prompt}. ${p.prompt}` : p.prompt;
+      }
+
+      if (!prompt) { showError("Enter a prompt to continue."); return; }
 
       try {
-        const parts = [];
-        if (mode === "edit" && uploadedImageData) {
-          parts.push({ inlineData: { mimeType: uploadedImageData.mimeType, data: uploadedImageData.base64 } });
-        }
-        parts.push({ text: prompt });
-
-        const selectedModel = document.getElementById("model-select").value;
-
-        const resp = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts }],
-              generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
-            }),
-          }
-        );
-
-        if (!resp.ok) {
-          const errData = await resp.json().catch(() => ({}));
-          throw new Error(errData?.error?.message || `API error: ${resp.status}`);
-        }
-
-        const data = await resp.json();
-
-        if (data?.candidates?.[0]?.content?.parts) {
-          const imgPart = data.candidates[0].content.parts.find(p => p.inlineData?.mimeType?.startsWith("image/"));
-          if (imgPart) {
-            const src = `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
-            showResult(src);
-            addToHistory(prompt, src);
+        if (state.mode === "video") {
+          if (state.provider === "openai") {
+            if (!state.openaiKey) return needKey("OpenAI");
+            await generateSoraVideo(prompt);
+          } else if (state.provider === "replicate") {
+            if (!state.replicateKey) return needKey("Replicate");
+            await generateReplicateVideo(prompt);
+          } else if (state.provider === "fal") {
+            if (!state.falKey) return needKey("fal.ai");
+            await generateFalVideo(prompt);
           } else {
-            const textPart = data.candidates[0].content.parts.find(p => p.text);
-            showError(textPart?.text || "No image generated — try a different prompt.");
+            if (!state.geminiKey) return needKey("Gemini");
+            await generateVideo(prompt);
           }
-        } else {
-          showError("Unexpected response. Try again.");
+        } else if (state.provider === "gemini") {
+          if (!state.geminiKey) return needKey("Gemini");
+          if (state.mode === "edit" && state.uploadedImages.length === 0) {
+            showError("Upload at least one image to edit."); return;
+          }
+          await generateGeminiImage(prompt);
+        } else if (state.provider === "openai") {
+          if (!state.openaiKey) return needKey("OpenAI");
+          if (state.mode === "edit" && state.uploadedImages.length === 0) {
+            showError("Upload at least one image to edit."); return;
+          }
+          await generateOpenAIImage(prompt);
+        } else if (state.provider === "grok") {
+          if (!state.xaiKey) return needKey("xAI Grok");
+          if (state.mode === "edit" && state.uploadedImages.length === 0) {
+            showError("Upload at least one image to edit."); return;
+          }
+          await generateGrokImage(prompt);
+        } else if (state.provider === "replicate") {
+          if (!state.replicateKey) return needKey("Replicate");
+          if (state.mode === "edit" && state.uploadedImages.length === 0) {
+            showError("Upload at least one image to edit."); return;
+          }
+          await generateReplicateImage(prompt);
+        } else if (state.provider === "fal") {
+          if (!state.falKey) return needKey("fal.ai");
+          if (state.mode === "edit" && state.uploadedImages.length === 0) {
+            showError("Upload at least one image to edit."); return;
+          }
+          await generateFalImage(prompt);
+        } else if (state.provider === "bfl") {
+          if (!state.bflKey) return needKey("Flux (BFL)");
+          if (state.mode === "edit" && state.uploadedImages.length === 0) {
+            showError("Upload at least one image to edit."); return;
+          }
+          await generateBflImage(prompt);
         }
       } catch (err) {
-        showError(err.message || "Something went wrong. Check your API key.");
-      } finally {
+        showError(err.message || "Something went wrong.");
         setLoading(false);
       }
     }
 
-    // ═══ UI HELPERS ═══
-    function setLoading(on) {
+    function needKey(which) {
+      showError(`Add your ${which} API key first.`);
+      toggleApiPanel();
+    }
+
+    // ═══════════════════════════════════════════════════
+    //   GEMINI IMAGE
+    // ═══════════════════════════════════════════════════
+    async function generateGeminiImage(prompt) {
+      setLoading(true, "image");
+      const model = document.getElementById("model-select").value;
+      const parts = [];
+
+      state.uploadedImages.forEach(img => {
+        parts.push({ inlineData: { mimeType: img.mimeType, data: img.base64 } });
+      });
+      parts.push({ text: prompt });
+
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${state.geminiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts }],
+            generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+          }),
+        }
+      );
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `Gemini error: ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      const partsOut = data?.candidates?.[0]?.content?.parts || [];
+      const imgPart = partsOut.find(p => p.inlineData?.mimeType?.startsWith("image/"));
+
+      if (!imgPart) {
+        const txt = partsOut.find(p => p.text)?.text;
+        throw new Error(txt || "No image returned. Try a different prompt.");
+      }
+
+      const src = `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
+      await showResult({ type: "image", src, prompt, model });
+      setLoading(false);
+    }
+
+    // ═══════════════════════════════════════════════════
+    //   OPENAI IMAGE
+    // ═══════════════════════════════════════════════════
+    async function generateOpenAIImage(prompt) {
+      setLoading(true, "image");
+      const model = document.getElementById("model-select").value;
+
+      let resp, data;
+
+      if (state.mode === "edit" && state.uploadedImages.length > 0 && model === "gpt-image-1") {
+        // Edit endpoint with multipart
+        const form = new FormData();
+        form.append("model", "gpt-image-1");
+        form.append("prompt", prompt);
+        form.append("size", "1024x1024");
+
+        for (let i = 0; i < state.uploadedImages.length; i++) {
+          const img = state.uploadedImages[i];
+          const blob = await (await fetch(img.dataUrl)).blob();
+          form.append("image[]", blob, `image-${i}.png`);
+        }
+
+        resp = await fetch("https://api.openai.com/v1/images/edits", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${state.openaiKey}` },
+          body: form,
+        });
+      } else {
+        // Generate endpoint
+        const body = { model, prompt, n: 1, size: "1024x1024" };
+        if (model === "gpt-image-1") body.quality = "high";
+        else if (model === "dall-e-3") body.quality = "hd";
+
+        resp = await fetch("https://api.openai.com/v1/images/generations", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${state.openaiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+      }
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `OpenAI error: ${resp.status}`);
+      }
+
+      data = await resp.json();
+      const item = data?.data?.[0];
+      let src;
+      if (item?.b64_json) src = `data:image/png;base64,${item.b64_json}`;
+      else if (item?.url) src = item.url;
+      else throw new Error("No image returned from OpenAI.");
+
+      await showResult({ type: "image", src, prompt, model });
+      setLoading(false);
+    }
+
+    // ═══════════════════════════════════════════════════
+    //   REPLICATE (Flux, SDXL, Seedance, Kling)
+    // ═══════════════════════════════════════════════════
+    async function urlToDataUrl(url) {
+      const r = await fetch(url);
+      const b = await r.blob();
+      return await blobToDataUrl(b);
+    }
+
+    function aspectToFluxRatio(a) { return a === "9:16" ? "9:16" : "16:9"; }
+
+    async function generateReplicateImage(prompt) {
+      setLoading(true, "image", true);
+      const model = document.getElementById("model-select").value;
+
+      const input = { prompt };
+      if (state.mode === "edit" && state.uploadedImages.length > 0) {
+        input.input_image = state.uploadedImages[0].dataUrl;
+      }
+
+      const startResp = await fetch(`https://api.replicate.com/v1/models/${model}/predictions`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${state.replicateKey}`,
+          "Content-Type": "application/json",
+          "Prefer": "wait=30",
+        },
+        body: JSON.stringify({ input }),
+      });
+
+      if (!startResp.ok) {
+        const err = await startResp.json().catch(() => ({}));
+        throw new Error(err?.detail || err?.title || `Replicate error: ${startResp.status}`);
+      }
+
+      let data = await startResp.json();
+
+      // Poll if not done yet
+      const start = Date.now();
+      while (data.status !== "succeeded" && data.status !== "failed" && data.status !== "canceled") {
+        if (Date.now() - start > 5 * 60 * 1000) throw new Error("Replicate timed out.");
+        const pct = Math.min(95, (Date.now() - start) / 60000 * 100);
+        updateProgress(pct);
+        updateLoadingSub(`${data.status || "processing"}...`);
+        await new Promise(r => setTimeout(r, 2500));
+        const pollResp = await fetch(data.urls.get, {
+          headers: { "Authorization": `Bearer ${state.replicateKey}` },
+        });
+        if (!pollResp.ok) throw new Error(`Replicate poll error: ${pollResp.status}`);
+        data = await pollResp.json();
+      }
+
+      if (data.status !== "succeeded") {
+        throw new Error(data.error || `Generation ${data.status}`);
+      }
+
+      // Output is array of URLs or single URL
+      const out = Array.isArray(data.output) ? data.output[0] : data.output;
+      if (!out) throw new Error("No output from Replicate.");
+
+      const src = await urlToDataUrl(out);
+      await showResult({ type: "image", src, prompt, model });
+      setLoading(false);
+    }
+
+    async function generateReplicateVideo(prompt) {
+      setLoading(true, "video", true);
+      const model = document.getElementById("model-select").value;
+      const aspect = document.getElementById("video-aspect").value;
+
+      const input = { prompt, aspect_ratio: aspect };
+      if (state.uploadedImages.length > 0) {
+        input.image = state.uploadedImages[0].dataUrl;
+      }
+      if (model.includes("seedance")) input.duration = 5;
+      if (model.includes("kling")) input.duration = "5";
+      if (model.includes("hailuo")) input.duration = 6;
+
+      const startResp = await fetch(`https://api.replicate.com/v1/models/${model}/predictions`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${state.replicateKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ input }),
+      });
+
+      if (!startResp.ok) {
+        const err = await startResp.json().catch(() => ({}));
+        throw new Error(err?.detail || `Replicate error: ${startResp.status}`);
+      }
+
+      let data = await startResp.json();
+      const start = Date.now();
+      const expectedSec = 120;
+
+      while (data.status !== "succeeded" && data.status !== "failed" && data.status !== "canceled") {
+        if (Date.now() - start > 8 * 60 * 1000) throw new Error("Replicate video timed out.");
+        const elapsed = (Date.now() - start) / 1000;
+        const pct = Math.min(95, elapsed / expectedSec * 100);
+        updateProgress(pct);
+        updateLoadingSub(`${data.status} ... ~${Math.max(0, expectedSec - Math.floor(elapsed))}s`);
+        await new Promise(r => setTimeout(r, 4000));
+        const pollResp = await fetch(data.urls.get, {
+          headers: { "Authorization": `Bearer ${state.replicateKey}` },
+        });
+        data = await pollResp.json();
+      }
+
+      if (data.status !== "succeeded") throw new Error(data.error || `Video ${data.status}`);
+
+      const out = Array.isArray(data.output) ? data.output[0] : data.output;
+      if (!out) throw new Error("No video URL from Replicate.");
+
+      updateLoadingSub("Downloading video...");
+      const dl = await fetch(out);
+      const blob = await dl.blob();
+      const src = URL.createObjectURL(blob);
+      const dataUrl = await blobToDataUrl(blob);
+      await showResult({ type: "video", src, dataUrl, prompt, model });
+      setLoading(false);
+    }
+
+    // ═══════════════════════════════════════════════════
+    //   FAL.AI (Flux, Recraft, Kling, Wan)
+    // ═══════════════════════════════════════════════════
+    async function generateFalImage(prompt) {
+      setLoading(true, "image", true);
+      const model = document.getElementById("model-select").value;
+
+      const input = {
+        prompt,
+        image_size: "landscape_16_9",
+        num_images: 1,
+        enable_safety_checker: false,
+      };
+      if (state.mode === "edit" && state.uploadedImages.length > 0) {
+        input.image_url = state.uploadedImages[0].dataUrl;
+      }
+
+      const startResp = await fetch(`https://queue.fal.run/${model}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Key ${state.falKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(input),
+      });
+
+      if (!startResp.ok) {
+        const err = await startResp.json().catch(() => ({}));
+        throw new Error(err?.detail || err?.message || `fal.ai error: ${startResp.status}`);
+      }
+
+      const job = await startResp.json();
+      const statusUrl = job.status_url;
+      const responseUrl = job.response_url;
+
+      const start = Date.now();
+      while (true) {
+        if (Date.now() - start > 5 * 60 * 1000) throw new Error("fal.ai timed out.");
+        const pct = Math.min(95, (Date.now() - start) / 30000 * 100);
+        updateProgress(pct);
+        await new Promise(r => setTimeout(r, 2000));
+        const sr = await fetch(statusUrl, {
+          headers: { "Authorization": `Key ${state.falKey}` },
+        });
+        if (!sr.ok) throw new Error(`fal.ai poll: ${sr.status}`);
+        const status = await sr.json();
+        updateLoadingSub(`${(status.status || "").toLowerCase()}...`);
+        if (status.status === "COMPLETED") break;
+        if (status.status === "FAILED" || status.status === "ERROR") {
+          throw new Error(status.error?.message || "fal.ai generation failed");
+        }
+      }
+
+      const result = await (await fetch(responseUrl, {
+        headers: { "Authorization": `Key ${state.falKey}` },
+      })).json();
+
+      const url = result?.images?.[0]?.url || result?.image?.url || result?.url;
+      if (!url) throw new Error("No image returned from fal.ai");
+
+      const src = await urlToDataUrl(url);
+      await showResult({ type: "image", src, prompt, model });
+      setLoading(false);
+    }
+
+    async function generateFalVideo(prompt) {
+      setLoading(true, "video", true);
+      const model = document.getElementById("model-select").value;
+      const aspect = document.getElementById("video-aspect").value;
+
+      const input = { prompt, aspect_ratio: aspect, duration: "5" };
+      if (state.uploadedImages.length > 0) {
+        input.image_url = state.uploadedImages[0].dataUrl;
+      }
+
+      const startResp = await fetch(`https://queue.fal.run/${model}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Key ${state.falKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(input),
+      });
+
+      if (!startResp.ok) {
+        const err = await startResp.json().catch(() => ({}));
+        throw new Error(err?.detail || `fal.ai error: ${startResp.status}`);
+      }
+
+      const job = await startResp.json();
+      const start = Date.now();
+      const expectedSec = 150;
+
+      while (true) {
+        if (Date.now() - start > 8 * 60 * 1000) throw new Error("fal.ai video timed out.");
+        const elapsed = (Date.now() - start) / 1000;
+        const pct = Math.min(95, elapsed / expectedSec * 100);
+        updateProgress(pct);
+        await new Promise(r => setTimeout(r, 4000));
+        const sr = await fetch(job.status_url, {
+          headers: { "Authorization": `Key ${state.falKey}` },
+        });
+        const status = await sr.json();
+        updateLoadingSub(`${(status.status || "").toLowerCase()} ... ~${Math.max(0, expectedSec - Math.floor(elapsed))}s`);
+        if (status.status === "COMPLETED") break;
+        if (status.status === "FAILED" || status.status === "ERROR") {
+          throw new Error(status.error?.message || "fal.ai video failed");
+        }
+      }
+
+      const result = await (await fetch(job.response_url, {
+        headers: { "Authorization": `Key ${state.falKey}` },
+      })).json();
+
+      const url = result?.video?.url || result?.url;
+      if (!url) throw new Error("No video URL from fal.ai");
+
+      updateLoadingSub("Downloading video...");
+      const dl = await fetch(url);
+      const blob = await dl.blob();
+      const src = URL.createObjectURL(blob);
+      const dataUrl = await blobToDataUrl(blob);
+      await showResult({ type: "video", src, dataUrl, prompt, model });
+      setLoading(false);
+    }
+
+    // ═══════════════════════════════════════════════════
+    //   BLACK FOREST LABS (Flux Pro, Ultra, Kontext)
+    // ═══════════════════════════════════════════════════
+    async function generateBflImage(prompt) {
+      setLoading(true, "image", true);
+      const model = document.getElementById("model-select").value;
+
+      const body = { prompt, output_format: "jpeg", safety_tolerance: 6 };
+
+      if (model.includes("ultra")) {
+        body.aspect_ratio = "16:9";
+        body.raw = false;
+      } else {
+        body.width = 1024;
+        body.height = 1024;
+      }
+
+      if (state.mode === "edit" && state.uploadedImages.length > 0) {
+        body.input_image = state.uploadedImages[0].base64;
+      }
+
+      const startResp = await fetch(`https://api.bfl.ai/v1/${model}`, {
+        method: "POST",
+        headers: {
+          "x-key": state.bflKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!startResp.ok) {
+        const err = await startResp.json().catch(() => ({}));
+        throw new Error(err?.detail || err?.message || `BFL error: ${startResp.status}`);
+      }
+
+      const job = await startResp.json();
+      const pollUrl = job.polling_url;
+      if (!pollUrl) throw new Error("No polling URL from BFL");
+
+      const start = Date.now();
+      let result;
+      while (true) {
+        if (Date.now() - start > 3 * 60 * 1000) throw new Error("BFL timed out.");
+        const pct = Math.min(95, (Date.now() - start) / 20000 * 100);
+        updateProgress(pct);
+        await new Promise(r => setTimeout(r, 1500));
+        const sr = await fetch(pollUrl, { headers: { "x-key": state.bflKey } });
+        if (!sr.ok) throw new Error(`BFL poll: ${sr.status}`);
+        result = await sr.json();
+        updateLoadingSub((result.status || "processing").toLowerCase() + "...");
+        if (result.status === "Ready") break;
+        if (result.status === "Error" || result.status === "Failed" || result.status === "Content Moderated") {
+          throw new Error(result.detail || result.status);
+        }
+      }
+
+      const url = result?.result?.sample;
+      if (!url) throw new Error("No image URL from BFL");
+
+      const src = await urlToDataUrl(url);
+      await showResult({ type: "image", src, prompt, model });
+      setLoading(false);
+    }
+
+    // ═══════════════════════════════════════════════════
+    //   GROK IMAGE (xAI)
+    // ═══════════════════════════════════════════════════
+    async function generateGrokImage(prompt) {
+      setLoading(true, "image");
+      const model = document.getElementById("model-select").value;
+
+      let resp;
+      if (state.mode === "edit" && state.uploadedImages.length > 0) {
+        // Edit endpoint - multipart
+        const form = new FormData();
+        form.append("model", model);
+        form.append("prompt", prompt);
+        for (let i = 0; i < state.uploadedImages.length; i++) {
+          const img = state.uploadedImages[i];
+          const blob = await (await fetch(img.dataUrl)).blob();
+          form.append(state.uploadedImages.length > 1 ? "image[]" : "image", blob, `image-${i}.png`);
+        }
+        resp = await fetch("https://api.x.ai/v1/images/edits", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${state.xaiKey}` },
+          body: form,
+        });
+      } else {
+        resp = await fetch("https://api.x.ai/v1/images/generations", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${state.xaiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            prompt,
+            n: 1,
+            response_format: "b64_json",
+          }),
+        });
+      }
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `Grok error: ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      const item = data?.data?.[0];
+      let src;
+      if (item?.b64_json) src = `data:image/jpeg;base64,${item.b64_json}`;
+      else if (item?.url) src = item.url;
+      else throw new Error("No image returned from Grok.");
+
+      await showResult({ type: "image", src, prompt, model });
+      setLoading(false);
+    }
+
+    // ═══════════════════════════════════════════════════
+    //   SORA 2 VIDEO (OpenAI)
+    // ═══════════════════════════════════════════════════
+    async function generateSoraVideo(prompt) {
+      setLoading(true, "video", true);
+      const model = document.getElementById("model-select").value;
+      const aspect = document.getElementById("video-aspect").value;
+      const resolution = document.getElementById("video-resolution").value;
+
+      // Map aspect + resolution to size string Sora wants
+      let size;
+      const wantHd = resolution === "1080p" && model === "sora-2-pro";
+      if (aspect === "9:16") size = wantHd ? "1080x1920" : "720x1280";
+      else size = wantHd ? "1920x1080" : "1280x720";
+
+      // Start the job
+      let startResp;
+      if (state.uploadedImages.length > 0) {
+        const form = new FormData();
+        form.append("model", model);
+        form.append("prompt", prompt);
+        form.append("seconds", "8");
+        form.append("size", size);
+        const blob = await dataUrlToBlob(state.uploadedImages[0].dataUrl);
+        form.append("input_reference", blob, "ref.png");
+
+        startResp = await fetch("https://api.openai.com/v1/videos", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${state.openaiKey}` },
+          body: form,
+        });
+      } else {
+        startResp = await fetch("https://api.openai.com/v1/videos", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${state.openaiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ model, prompt, seconds: "8", size }),
+        });
+      }
+
+      if (!startResp.ok) {
+        const err = await startResp.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `Sora error: ${startResp.status}`);
+      }
+
+      const job = await startResp.json();
+      const jobId = job.id;
+      if (!jobId) throw new Error("No job id returned from Sora.");
+
+      // Poll
+      updateLoadingSub(`Job queued (${jobId.slice(0, 12)})...`);
+      const start = Date.now();
+      const maxWait = 6 * 60 * 1000;
+      const expectedSec = model === "sora-2-pro" ? 180 : 90;
+
+      while (true) {
+        const elapsed = Date.now() - start;
+        if (elapsed > maxWait) throw new Error("Sora timed out after 6 minutes.");
+
+        await new Promise(r => setTimeout(r, 5000));
+
+        const sr = await fetch(`https://api.openai.com/v1/videos/${jobId}`, {
+          headers: { "Authorization": `Bearer ${state.openaiKey}` },
+        });
+        if (!sr.ok) {
+          const err = await sr.json().catch(() => ({}));
+          throw new Error(err?.error?.message || `Status check ${sr.status}`);
+        }
+        const status = await sr.json();
+
+        const apiPct = typeof status.progress === "number" ? status.progress : null;
+        const timePct = (elapsed / 1000) / expectedSec * 100;
+        const pct = Math.min(95, apiPct != null ? apiPct : timePct);
+        updateProgress(pct);
+        const remaining = Math.max(0, expectedSec - Math.floor(elapsed / 1000));
+        updateLoadingSub(`${status.status || "processing"} ... ~${remaining}s`);
+
+        if (status.status === "completed") {
+          updateProgress(100);
+          updateLoadingSub("Downloading video...");
+          const dl = await fetch(`https://api.openai.com/v1/videos/${jobId}/content`, {
+            headers: { "Authorization": `Bearer ${state.openaiKey}` },
+          });
+          if (!dl.ok) throw new Error(`Download failed: ${dl.status}`);
+          const blob = await dl.blob();
+          const src = URL.createObjectURL(blob);
+          const dataUrl = await blobToDataUrl(blob);
+          await showResult({ type: "video", src, dataUrl, prompt, model });
+          setLoading(false);
+          return;
+        }
+
+        if (status.status === "failed") {
+          throw new Error(status.error?.message || "Sora generation failed.");
+        }
+      }
+    }
+
+    // ═══════════════════════════════════════════════════
+    //   VEO VIDEO
+    // ═══════════════════════════════════════════════════
+    async function generateVideo(prompt) {
+      setLoading(true, "video", true);
+      const model = document.getElementById("model-select").value;
+      const aspect = document.getElementById("video-aspect").value;
+      const resolution = document.getElementById("video-resolution").value;
+      const people = document.getElementById("video-people").value;
+      const audio = document.getElementById("video-audio").checked;
+
+      const instances = [{ prompt }];
+      if (state.uploadedImages.length > 0) {
+        instances[0].image = {
+          bytesBase64Encoded: state.uploadedImages[0].base64,
+          mimeType: state.uploadedImages[0].mimeType,
+        };
+      }
+
+      const parameters = {
+        aspectRatio: aspect,
+        personGeneration: people,
+      };
+      if (resolution === "1080p" && model.startsWith("veo-3")) {
+        parameters.resolution = "1080p";
+      }
+      if (model.startsWith("veo-3") && !audio) {
+        parameters.generateAudio = false;
+      }
+
+      // Start operation
+      const startResp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:predictLongRunning?key=${state.geminiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ instances, parameters }),
+        }
+      );
+
+      if (!startResp.ok) {
+        const err = await startResp.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `Veo error: ${startResp.status}`);
+      }
+
+      const startData = await startResp.json();
+      const opName = startData.name;
+      if (!opName) throw new Error("No operation returned from Veo.");
+
+      // Poll
+      updateLoadingSub("Operation started, waiting on render...");
+      const start = Date.now();
+      const maxWait = 6 * 60 * 1000; // 6 minutes
+      const expectedSec = model.includes("fast") ? 60 : 120;
+
+      while (true) {
+        const elapsed = Date.now() - start;
+        if (elapsed > maxWait) throw new Error("Video generation timed out after 6 minutes.");
+
+        const pct = Math.min(95, (elapsed / 1000) / expectedSec * 100);
+        updateProgress(pct);
+        const remaining = Math.max(0, expectedSec - Math.floor(elapsed / 1000));
+        updateLoadingSub(`Rendering... ~${remaining}s remaining`);
+
+        await new Promise(r => setTimeout(r, 5000));
+
+        const pollResp = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/${opName}?key=${state.geminiKey}`
+        );
+        if (!pollResp.ok) {
+          const err = await pollResp.json().catch(() => ({}));
+          throw new Error(err?.error?.message || `Poll error: ${pollResp.status}`);
+        }
+
+        const opData = await pollResp.json();
+        if (opData.error) throw new Error(opData.error.message || "Veo operation failed.");
+
+        if (opData.done) {
+          updateProgress(100);
+          updateLoadingSub("Downloading video...");
+          const sample = opData.response?.generateVideoResponse?.generatedSamples?.[0]
+                      || opData.response?.generatedVideos?.[0];
+          const uri = sample?.video?.uri || sample?.video;
+          if (!uri) throw new Error("No video URI returned.");
+
+          // Fetch the video bytes (auth via key)
+          const sep = uri.includes("?") ? "&" : "?";
+          const videoResp = await fetch(`${uri}${sep}key=${state.geminiKey}`);
+          if (!videoResp.ok) throw new Error(`Video download failed: ${videoResp.status}`);
+          const blob = await videoResp.blob();
+          const src = URL.createObjectURL(blob);
+
+          // Also store as data URL so it persists in IndexedDB
+          const dataUrl = await blobToDataUrl(blob);
+          await showResult({ type: "video", src, dataUrl, prompt, model });
+          setLoading(false);
+          return;
+        }
+      }
+    }
+
+    function blobToDataUrl(blob) {
+      return new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result);
+        r.onerror = rej;
+        r.readAsDataURL(blob);
+      });
+    }
+
+    // ═══════════════════════════════════════════════════
+    //   RESULTS
+    // ═══════════════════════════════════════════════════
+    async function showResult(result) {
+      state.currentResult = result;
+
+      document.getElementById("empty-state").style.display = "none";
+      document.getElementById("result-container").style.display = "block";
+
+      const img = document.getElementById("result-img");
+      const vid = document.getElementById("result-video");
+      const useBtn = document.getElementById("use-input-btn");
+      const copyBtn = document.getElementById("copy-btn");
+
+      if (result.type === "image") {
+        vid.style.display = "none";
+        vid.pause(); vid.removeAttribute("src"); vid.load();
+        img.style.display = "block";
+        img.src = result.src;
+        useBtn.style.display = "";
+        copyBtn.style.display = "";
+      } else {
+        img.style.display = "none";
+        vid.style.display = "block";
+        vid.src = result.src;
+        vid.play().catch(() => {});
+        useBtn.style.display = "none";
+        copyBtn.style.display = "none";
+      }
+
+      document.getElementById("result-meta").textContent = `${result.model} · ${new Date().toLocaleTimeString()}`;
+
+      // Persist
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const stored = {
+        id,
+        type: result.type,
+        src: result.dataUrl || result.src,
+        prompt: result.prompt,
+        model: result.model,
+        time: Date.now(),
+      };
+
+      try {
+        await dbAddHistory(stored);
+        await dbTrim();
+        state.history = await dbGetHistory();
+        renderHistory();
+        // Push to cloud in background (no await, no await on errors)
+        syncToCloud(stored);
+      } catch (e) { console.warn("History save failed", e); }
+    }
+
+    function downloadResult() {
+      if (!state.currentResult) return;
+      const r = state.currentResult;
+      const a = document.createElement("a");
+      a.href = r.src;
+      const ext = r.type === "video" ? "mp4" : "png";
+      a.download = `nano-banana-${r.type}-${Date.now()}.${ext}`;
+      a.click();
+    }
+
+    function useAsInput() {
+      if (!state.currentResult || state.currentResult.type !== "image") return;
+      const src = state.currentResult.src;
+      const base64 = src.split(",")[1];
+      const mime = src.split(";")[0].split(":")[1];
+      state.uploadedImages = [{ base64, mimeType: mime, dataUrl: src }];
+      setMode("edit");
+      renderThumbs();
+    }
+
+    async function copyResult() {
+      if (!state.currentResult || state.currentResult.type !== "image") return;
+      try {
+        const resp = await fetch(state.currentResult.src);
+        const blob = await resp.blob();
+        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+        const btn = event.target;
+        const orig = btn.textContent;
+        btn.textContent = "✓ Copied";
+        setTimeout(() => btn.textContent = orig, 1500);
+      } catch {
+        showError("Couldn't copy. Try downloading instead.");
+      }
+    }
+
+    function fullscreen() {
+      if (!state.currentResult) return;
+      const r = state.currentResult;
+      const win = window.open("", "_blank");
+      if (r.type === "video") {
+        win.document.write(`<html><head><title>Nano Banana</title>
+          <style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+          video{max-width:100%;max-height:100vh;}</style></head>
+          <body><video src="${r.src}" controls autoplay loop></video></body></html>`);
+      } else {
+        win.document.write(`<html><head><title>Nano Banana</title>
+          <style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+          img{max-width:100%;max-height:100vh;object-fit:contain;}</style></head>
+          <body><img src="${r.src}" /></body></html>`);
+      }
+    }
+
+    // ═══════════════════════════════════════════════════
+    //   LOADING
+    // ═══════════════════════════════════════════════════
+    function setLoading(on, type = "image", showProgress = false) {
       const overlay = document.getElementById("loading-overlay");
       const btn = document.getElementById("generate-btn");
+      const bar = document.getElementById("progress-bar");
+
       btn.disabled = on;
 
       if (on) {
         overlay.classList.add("show");
-        let i = 0;
+        bar.style.display = showProgress ? "block" : "none";
+        updateProgress(0);
+        const msgs = LOADING_MSGS[type];
         const txt = document.getElementById("loading-text");
-        txt.textContent = LOADING_MSGS[0];
+        let i = 0;
+        txt.textContent = msgs[0];
+        clearInterval(window._loadingInterval);
         window._loadingInterval = setInterval(() => {
-          i = (i + 1) % LOADING_MSGS.length;
-          txt.textContent = LOADING_MSGS[i];
+          i = (i + 1) % msgs.length;
+          txt.textContent = msgs[i];
         }, 2500);
-        btn.innerHTML = '<span class="spinner"></span>Generating...';
+        btn.innerHTML = '<span class="spinner"></span>Working...';
       } else {
         overlay.classList.remove("show");
         clearInterval(window._loadingInterval);
-        btn.textContent = mode === "generate" ? "✦ Generate Image" : "✎ Edit Image";
+        updateLoadingSub("");
+        updateModeUI();
       }
     }
 
-    function showResult(src) {
-      generatedImageSrc = src;
-      document.getElementById("empty-state").style.display = "none";
-      document.getElementById("result-container").style.display = "block";
-      const img = document.getElementById("result-img");
-      img.src = src;
-      img.style.animation = "none";
-      img.offsetHeight; // reflow
-      img.style.animation = "fadeScale 0.4s ease";
+    function updateLoadingSub(text) {
+      document.getElementById("loading-sub").textContent = text;
+    }
+
+    function updateProgress(pct) {
+      document.getElementById("progress-fill").style.width = `${pct}%`;
     }
 
     function showError(msg) {
       const bar = document.getElementById("error-bar");
       bar.textContent = msg;
       bar.classList.add("show");
+      setTimeout(() => bar.classList.remove("show"), 8000);
     }
     function hideError() {
       document.getElementById("error-bar").classList.remove("show");
     }
 
-    // ═══ RESULT ACTIONS ═══
-    function downloadImage() {
-      if (!generatedImageSrc) return;
-      const a = document.createElement("a");
-      a.href = generatedImageSrc;
-      a.download = `nano-banana-${Date.now()}.png`;
-      a.click();
-    }
-
-    function useAsInput() {
-      if (!generatedImageSrc) return;
-      const base64 = generatedImageSrc.split(",")[1];
-      const mime = generatedImageSrc.split(";")[0].split(":")[1];
-      uploadedImageData = { base64, mimeType: mime };
-      document.getElementById("preview-img").src = generatedImageSrc;
-      document.getElementById("upload-placeholder").style.display = "none";
-      document.getElementById("upload-preview").style.display = "block";
-      document.getElementById("upload-zone").classList.add("has-image");
-      setMode("edit");
-    }
-
-    async function copyImage() {
-      if (!generatedImageSrc) return;
-      try {
-        const resp = await fetch(generatedImageSrc);
-        const blob = await resp.blob();
-        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
-        // Quick flash feedback
-        const btn = event.target;
-        const orig = btn.textContent;
-        btn.textContent = "✓ Copied";
-        setTimeout(() => btn.textContent = orig, 1500);
-      } catch {
-        showError("Couldn't copy — try downloading instead.");
-      }
-    }
-
-    function fullscreen() {
-      if (!generatedImageSrc) return;
-      const win = window.open("", "_blank");
-      win.document.write(`
-        <html><head><title>Nano Banana Studio</title>
-        <style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;}
-        img{max-width:100%;max-height:100vh;object-fit:contain;}</style></head>
-        <body><img src="${generatedImageSrc}" /></body></html>
-      `);
-    }
-
-    // ═══ HISTORY ═══
-    function addToHistory(prompt, src) {
-      history.unshift({ prompt, src, time: Date.now() });
-      if (history.length > 20) history.pop();
-      try { localStorage.setItem("nb_history", JSON.stringify(history.map(h => ({ prompt: h.prompt, time: h.time })))); } catch {}
-      renderHistory();
-    }
-
-    function loadHistory() {
-      // History images can't persist in localStorage (too large), just show session history
-      renderHistory();
-    }
-
+    // ═══════════════════════════════════════════════════
+    //   HISTORY
+    // ═══════════════════════════════════════════════════
     function renderHistory() {
       const section = document.getElementById("history-section");
       const row = document.getElementById("history-row");
-      if (!history.length) { section.style.display = "none"; return; }
+      if (!state.history.length) { section.style.display = "none"; return; }
       section.style.display = "block";
-      row.innerHTML = history.map((h, i) =>
-        `<div class="history-thumb ${h.src === generatedImageSrc ? 'active' : ''}" onclick="showResult(history[${i}].src)" title="${h.prompt.substring(0,60)}">
-          <img src="${h.src}" alt="" />
-        </div>`
-      ).join("");
+
+      const currentSrc = state.currentResult?.dataUrl || state.currentResult?.src;
+      row.innerHTML = state.history.map(h => {
+        const isVideo = h.type === "video";
+        const active = h.src === currentSrc ? "active" : "";
+        const synced = drive.syncedIds.has(h.id);
+        const syncBadge = synced ? `<div class="sync-badge" title="Synced to Drive">✓</div>` : "";
+        const inner = isVideo
+          ? `<video src="${h.src}" muted></video><div class="vid-badge">▶</div>${syncBadge}`
+          : `<img src="${h.src}" alt="" />${syncBadge}`;
+        return `<div class="history-thumb ${active}" data-id="${h.id}" onclick="loadHistory('${h.id}')" title="${(h.prompt || '').replace(/"/g, '&quot;').slice(0, 80)}">${inner}</div>`;
+      }).join("");
     }
 
-    // ═══ PWA ═══
+    window.loadHistory = function(id) {
+      const item = state.history.find(h => h.id === id);
+      if (!item) return;
+      showResultFromHistory(item);
+    };
+
+    function showResultFromHistory(item) {
+      state.currentResult = { type: item.type, src: item.src, prompt: item.prompt, model: item.model };
+      document.getElementById("empty-state").style.display = "none";
+      document.getElementById("result-container").style.display = "block";
+
+      const img = document.getElementById("result-img");
+      const vid = document.getElementById("result-video");
+      const useBtn = document.getElementById("use-input-btn");
+      const copyBtn = document.getElementById("copy-btn");
+
+      if (item.type === "image") {
+        vid.style.display = "none"; vid.pause(); vid.removeAttribute("src");
+        img.style.display = "block"; img.src = item.src;
+        useBtn.style.display = ""; copyBtn.style.display = "";
+      } else {
+        img.style.display = "none";
+        vid.style.display = "block"; vid.src = item.src;
+        vid.play().catch(() => {});
+        useBtn.style.display = "none"; copyBtn.style.display = "none";
+      }
+
+      document.getElementById("result-meta").textContent = `${item.model} · ${new Date(item.time).toLocaleString()}`;
+      renderHistory();
+    }
+
+    async function clearHistory() {
+      if (!confirm("Clear all history?")) return;
+      await dbClearHistory();
+      state.history = [];
+      renderHistory();
+    }
+
+    // ═══════════════════════════════════════════════════
+    //   PWA
+    // ═══════════════════════════════════════════════════
     let deferredPrompt;
     window.addEventListener("beforeinstallprompt", e => {
       e.preventDefault();
@@ -882,7 +3036,7 @@
       }
     }
 
-    // ═══ GO ═══
+    // GO
     init();
   </script>
 </body>
