@@ -884,11 +884,10 @@
             </div>
           </div>
           <div class="opt-block" style="margin-top:8px;">
-            <div class="lbl">People Generation</div>
+            <div class="lbl">People in Video</div>
             <select id="video-people">
-              <option value="allow_all">Allow All</option>
+              <option value="allow_all">Allow All Ages</option>
               <option value="allow_adult">Adults Only</option>
-              <option value="dont_allow">Don't Allow</option>
             </select>
           </div>
           <div class="toggle-row" id="audio-toggle-wrap">
@@ -1082,8 +1081,10 @@
           { value: "fal-ai/flux-pro/kontext/max/multi", label: "🔀 Flux Kontext Max Multi" },
         ],
         video: [
-          { value: "fal-ai/kling-video/v2.5/pro/text-to-video", label: "🎬 Kling 2.5 Pro" },
-          { value: "fal-ai/wan-pro/text-to-video", label: "🎬 Wan Pro" },
+          { value: "fal-ai/kling-video/v2.5-turbo/pro", label: "🎬 Kling 2.5 Turbo Pro" },
+          { value: "fal-ai/kling-video/v2.6/pro", label: "🎬 Kling 2.6 Pro (Audio)" },
+          { value: "fal-ai/kling-video/v3/pro", label: "🎬 Kling 3.0 Pro (Best)" },
+          { value: "fal-ai/wan-pro", label: "🎬 Wan Pro" },
         ],
       },
       bfl: {
@@ -2468,12 +2469,20 @@
       const model = document.getElementById("model-select").value;
       const aspect = document.getElementById("video-aspect").value;
 
-      const input = { prompt, aspect_ratio: aspect, duration: "5" };
-      if (state.uploadedImages.length > 0) {
-        input.image_url = state.uploadedImages[0].dataUrl;
+      // FAL splits text-to-video and image-to-video into separate endpoints.
+      // Pick the mode suffix and the right image field based on what was uploaded.
+      const hasImage = state.uploadedImages.length > 0;
+      const endpoint = `${model}/${hasImage ? "image-to-video" : "text-to-video"}`;
+
+      const input = { prompt, duration: "5" };
+      if (hasImage) {
+        // v2.6 and v3 use start_image_url; aspect is inferred from the image.
+        input.start_image_url = state.uploadedImages[0].dataUrl;
+      } else {
+        input.aspect_ratio = aspect;
       }
 
-      const startResp = await fetch(`https://queue.fal.run/${model}`, {
+      const startResp = await fetch(`https://queue.fal.run/${endpoint}`, {
         method: "POST",
         headers: {
           "Authorization": `Key ${state.falKey}`,
@@ -2601,19 +2610,25 @@
 
       let resp;
       if (state.mode === "edit" && state.uploadedImages.length > 0) {
-        // Edit endpoint - multipart
-        const form = new FormData();
-        form.append("model", model);
-        form.append("prompt", prompt);
-        for (let i = 0; i < state.uploadedImages.length; i++) {
-          const img = state.uploadedImages[i];
-          const blob = await (await fetch(img.dataUrl)).blob();
-          form.append(state.uploadedImages.length > 1 ? "image[]" : "image", blob, `image-${i}.png`);
-        }
+        // xAI image editing expects JSON with base64 data URI(s), not multipart.
+        const editModel = model.startsWith("grok-imagine") ? model : "grok-imagine-image-quality";
+        const body = {
+          model: editModel,
+          prompt,
+          response_format: "b64_json",
+        };
+        // Single image -> "image"; multiple -> "images" array (up to 3 supported).
+        const dataUris = state.uploadedImages.slice(0, 3).map(img => img.dataUrl);
+        if (dataUris.length === 1) body.image = dataUris[0];
+        else body.images = dataUris;
+
         resp = await fetch("https://api.x.ai/v1/images/edits", {
           method: "POST",
-          headers: { "Authorization": `Bearer ${state.xaiKey}` },
-          body: form,
+          headers: {
+            "Authorization": `Bearer ${state.xaiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
         });
       } else {
         resp = await fetch("https://api.x.ai/v1/images/generations", {
@@ -2768,7 +2783,8 @@
 
       const parameters = {
         aspectRatio: aspect,
-        personGeneration: people,
+        // personGeneration must be "allow_all" for image-to-video; the API rejects other values
+        personGeneration: state.uploadedImages.length > 0 ? "allow_all" : people,
       };
       if (resolution === "1080p" && model.startsWith("veo-3")) {
         parameters.resolution = "1080p";
@@ -2827,19 +2843,68 @@
         if (opData.done) {
           updateProgress(100);
           updateLoadingSub("Downloading video...");
-          const sample = opData.response?.generateVideoResponse?.generatedSamples?.[0]
-                      || opData.response?.generatedVideos?.[0];
-          const uri = sample?.video?.uri || sample?.video;
-          if (!uri) throw new Error("No video URI returned.");
 
-          // Fetch the video bytes (auth via key)
-          const sep = uri.includes("?") ? "&" : "?";
-          const videoResp = await fetch(`${uri}${sep}key=${state.geminiKey}`);
-          if (!videoResp.ok) throw new Error(`Video download failed: ${videoResp.status}`);
-          const blob = await videoResp.blob();
+          // Log full response for debugging
+          console.log("Veo response:", JSON.stringify(opData, null, 2));
+
+          const resp = opData.response || {};
+
+          // Check for content moderation
+          const filteredCount =
+            resp.generateVideoResponse?.raiMediaFilteredCount ||
+            resp.raiMediaFilteredCount || 0;
+          const filterReasons =
+            resp.generateVideoResponse?.raiMediaFilteredReasons ||
+            resp.raiMediaFilteredReasons;
+
+          // Try every known response shape
+          let samples =
+            resp.generateVideoResponse?.generatedSamples ||
+            resp.generatedSamples ||
+            resp.generatedVideos ||
+            resp.generated_videos ||
+            resp.generated_samples ||
+            resp.predictions ||
+            [];
+
+          if (!samples.length) {
+            if (filteredCount > 0) {
+              const reason = Array.isArray(filterReasons) ? filterReasons.join(", ") : "content policy";
+              throw new Error(`Veo blocked the generation (${filteredCount} filtered). Reason: ${reason}. Try softening the prompt or using a different image.`);
+            }
+            throw new Error(`Veo finished but returned no video. Check the browser console for the full response.`);
+          }
+
+          const sample = samples[0];
+          // Video can be at many paths
+          const uri =
+            sample?.video?.uri ||
+            sample?.video?.url ||
+            (typeof sample?.video === "string" ? sample.video : null) ||
+            sample?.uri ||
+            sample?.url;
+          const inlineData =
+            sample?.video?.bytesBase64Encoded ||
+            sample?.bytesBase64Encoded ||
+            sample?.video?.encodedVideo;
+
+          let blob;
+          if (uri && typeof uri === "string") {
+            const sep = uri.includes("?") ? "&" : "?";
+            const videoResp = await fetch(`${uri}${sep}key=${state.geminiKey}`);
+            if (!videoResp.ok) throw new Error(`Video download failed: ${videoResp.status}`);
+            blob = await videoResp.blob();
+          } else if (inlineData) {
+            const bytes = atob(inlineData);
+            const arr = new Uint8Array(bytes.length);
+            for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+            blob = new Blob([arr], { type: "video/mp4" });
+          } else {
+            console.error("Sample without recognizable video data:", sample);
+            throw new Error(`Video data missing from response. Open browser console (F12) and share the "Veo response:" log.`);
+          }
+
           const src = URL.createObjectURL(blob);
-
-          // Also store as data URL so it persists in IndexedDB
           const dataUrl = await blobToDataUrl(blob);
           await showResult({ type: "video", src, dataUrl, prompt, model });
           setLoading(false);
