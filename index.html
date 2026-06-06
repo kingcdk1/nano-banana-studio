@@ -740,7 +740,7 @@
       <div class="logo">
         <div class="logo-icon">🍌</div>
         <span class="logo-text">Nano Banana Studio</span>
-        <span class="logo-v">V3</span>
+        <span class="logo-v">V3.5</span>
       </div>
       <div class="header-actions">
         <div style="display:flex;align-items:center;margin-right:8px;">
@@ -884,6 +884,10 @@
             </div>
           </div>
           <div class="opt-block" style="margin-top:8px;">
+            <div class="lbl">Duration</div>
+            <select id="video-duration"></select>
+          </div>
+          <div class="opt-block" style="margin-top:8px;">
             <div class="lbl">People in Video</div>
             <select id="video-people">
               <option value="allow_all">Allow All Ages</option>
@@ -905,7 +909,7 @@
         <!-- MODEL -->
         <div>
           <div class="section-label">Model</div>
-          <select id="model-select" class="model-select"></select>
+          <select id="model-select" class="model-select" onchange="renderVideoDurations()"></select>
         </div>
 
         <!-- GENERATE -->
@@ -1074,11 +1078,13 @@
           { value: "fal-ai/flux/schnell", label: "⚡ Flux Schnell" },
           { value: "fal-ai/flux/dev", label: "🎨 Flux Dev" },
           { value: "fal-ai/recraft-v3", label: "🎨 Recraft V3" },
+          { value: "fal-ai/bytedance/seedream/v4.5/text-to-image", label: "🌅 Seedream 4.5 (Best Quality)" },
         ],
         edit: [
           { value: "fal-ai/flux-pro/kontext", label: "🎨 Flux Kontext Pro (Single)" },
           { value: "fal-ai/flux-pro/kontext/max", label: "💎 Flux Kontext Max (Single)" },
           { value: "fal-ai/flux-pro/kontext/max/multi", label: "🔀 Flux Kontext Max Multi" },
+          { value: "fal-ai/bytedance/seedream/v4.5/edit", label: "🌅 Seedream 4.5 Edit (Multi-image)" },
         ],
         video: [
           { value: "fal-ai/kling-video/v2.5-turbo/pro", label: "🎬 Kling 2.5 Turbo Pro" },
@@ -1098,6 +1104,18 @@
           { value: "flux-kontext-max", label: "💎 Flux Kontext Max" },
         ],
       },
+    };
+
+    // Per-model valid video durations (verified against FAL + Replicate schemas).
+    // Values are strings (DOM dropdown); converted to number per-model where the API requires it.
+    const VIDEO_DURATIONS = {
+      "fal-ai/kling-video/v2.5-turbo/pro": ["5", "10"],
+      "fal-ai/kling-video/v2.6/pro": ["5", "10"],
+      "fal-ai/kling-video/v3/pro": ["5", "10"],
+      "fal-ai/wan-pro": ["5"],
+      "bytedance/seedance-1-pro": ["5", "10"],
+      "kwaivgi/kling-v1.6-pro": ["5", "10"],
+      "minimax/hailuo-02": ["6", "10"],
     };
 
     const PRESETS = [
@@ -1931,6 +1949,15 @@
       const sel = document.getElementById("model-select");
       const list = MODELS[state.provider]?.[state.mode] || [];
       sel.innerHTML = list.map(m => `<option value="${m.value}">${m.label}</option>`).join("");
+      renderVideoDurations();
+    }
+
+    function renderVideoDurations() {
+      const sel = document.getElementById("video-duration");
+      if (!sel) return;
+      const model = document.getElementById("model-select").value;
+      const opts = VIDEO_DURATIONS[model] || ["5"];
+      sel.innerHTML = opts.map(d => `<option value="${d}">${d}</option>`).join("");
     }
 
     function updateModeUI() {
@@ -2346,9 +2373,10 @@
       if (state.uploadedImages.length > 0) {
         input.image = state.uploadedImages[0].dataUrl;
       }
-      if (model.includes("seedance")) input.duration = 5;
-      if (model.includes("kling")) input.duration = "5";
-      if (model.includes("hailuo")) input.duration = 6;
+      const durVal = document.getElementById("video-duration").value || "5";
+      if (model.includes("seedance")) input.duration = Number(durVal);
+      if (model.includes("kling")) input.duration = durVal;
+      if (model.includes("hailuo")) input.duration = Number(durVal);
 
       const startResp = await fetch(`https://api.replicate.com/v1/models/${model}/predictions`, {
         method: "POST",
@@ -2474,7 +2502,7 @@
       const hasImage = state.uploadedImages.length > 0;
       const endpoint = `${model}/${hasImage ? "image-to-video" : "text-to-video"}`;
 
-      const input = { prompt, duration: "5" };
+      const input = { prompt, duration: document.getElementById("video-duration").value || "5" };
       if (hasImage) {
         // v2.6 and v3 use start_image_url; aspect is inferred from the image.
         input.start_image_url = state.uploadedImages[0].dataUrl;
