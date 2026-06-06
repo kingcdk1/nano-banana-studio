@@ -2430,9 +2430,14 @@
       setLoading(true, "image", true);
       const model = document.getElementById("model-select").value;
 
+      // Seedream/SeedEdit require image_size as a {width,height} object within
+      // their 1920-4096 range; the Flux-style string enum resolves below that
+      // minimum and gets rejected with a 422. Other FAL models keep the enum.
+      const isSeedream = model.includes("seedream") || model.includes("seededit");
+
       const input = {
         prompt,
-        image_size: "landscape_16_9",
+        image_size: isSeedream ? { width: 2560, height: 1440 } : "landscape_16_9",
         num_images: 1,
         enable_safety_checker: false,
       };
