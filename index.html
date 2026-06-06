@@ -2442,10 +2442,16 @@
         enable_safety_checker: false,
       };
       if (state.mode === "edit" && state.uploadedImages.length > 0) {
-        input.image_url = state.uploadedImages[0].dataUrl;
-        if (state.uploadedImages.length > 1) {
-          // fal.ai Kontext Multi uses image_urls array
+        if (isSeedream) {
+          // Seedream/SeedEdit edit expects image_urls (array, 1-10) and no image_size object.
+          delete input.image_size;
           input.image_urls = state.uploadedImages.map(img => img.dataUrl);
+        } else {
+          input.image_url = state.uploadedImages[0].dataUrl;
+          if (state.uploadedImages.length > 1) {
+            // fal.ai Kontext Multi uses image_urls array
+            input.image_urls = state.uploadedImages.map(img => img.dataUrl);
+          }
         }
       }
 
